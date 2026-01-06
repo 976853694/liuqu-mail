@@ -30,14 +30,6 @@ jobs:
           sed -i "s/ADMIN_USERNAME = \".*\"/ADMIN_USERNAME = \"${{ secrets.ADMIN_USERNAME }}\"/" wrangler.toml
           sed -i "s/ADMIN_PASSWORD = \".*\"/ADMIN_PASSWORD = \"${{ secrets.ADMIN_PASSWORD }}\"/" wrangler.toml
 
-      - name: Initialize D1 Database
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: d1 execute ${{ secrets.D1_DATABASE_ID }} --remote --file=schema.sql
-        continue-on-error: true
-
       - name: Deploy to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
         with:
