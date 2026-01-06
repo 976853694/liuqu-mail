@@ -29,14 +29,13 @@ let FRONTEND_HTML = `<!DOCTYPE html>
       --success: #10B981;
       --danger: #EF4444;
       --warning: #F59E0B;
-      --card-bg: rgba(255,255,255,0.85);
+      --card-bg: #FFFFFF;
       --sidebar-width: 240px;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { 
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif; 
-      background: linear-gradient(135deg, #1E3A8A 0%, #3B82F6 50%, #0EA5E9 100%);
-      background-attachment: fixed;
+      background: linear-gradient(135deg, #1E3A8A 0%, #3B82F6 100%);
       min-height: 100vh;
       color: var(--text);
       line-height: 1.6;
@@ -60,12 +59,10 @@ let FRONTEND_HTML = `<!DOCTYPE html>
       min-height: 100vh;
     }
     
-    /* Sidebar */
+    /* Sidebar - 移除毛玻璃效果 */
     .sidebar {
       width: var(--sidebar-width);
-      background: rgba(255,255,255,0.95);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      background: #FFFFFF;
       border-right: 1px solid var(--border);
       display: flex;
       flex-direction: column;
@@ -130,12 +127,11 @@ let FRONTEND_HTML = `<!DOCTYPE html>
       padding: 12px 20px;
       color: var(--text-muted);
       cursor: pointer;
-      transition: all 0.15s ease-out;
       font-size: 14px;
       font-weight: 500;
     }
-    .nav-item:hover { background: rgba(37,99,235,0.05); color: var(--text); }
-    .nav-item.active { background: rgba(37,99,235,0.1); color: var(--primary); }
+    .nav-item:hover { background: #F1F5F9; color: var(--text); }
+    .nav-item.active { background: #EFF6FF; color: var(--primary); }
     .nav-item svg { width: 20px; height: 20px; }
     .nav-divider { height: 1px; background: var(--border); margin: 8px 20px; }
     
@@ -144,7 +140,7 @@ let FRONTEND_HTML = `<!DOCTYPE html>
       border-top: 1px solid var(--border);
     }
     .nav-item.logout { color: var(--danger); }
-    .nav-item.logout:hover { background: rgba(239,68,68,0.05); }
+    .nav-item.logout:hover { background: #FEF2F2; }
     
     /* Main Content */
     .main-content {
@@ -169,13 +165,12 @@ let FRONTEND_HTML = `<!DOCTYPE html>
       height: calc(100vh - 48px);
     }
     
+    /* 移除毛玻璃效果，使用纯白背景 */
     .mailbox-panel, .email-panel {
-      background: var(--card-bg);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      background: #FFFFFF;
       border-radius: 16px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
-      border: 1px solid rgba(255,255,255,0.3);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      border: 1px solid var(--border);
       display: flex;
       flex-direction: column;
       overflow: hidden;
@@ -187,27 +182,25 @@ let FRONTEND_HTML = `<!DOCTYPE html>
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: rgba(255,255,255,0.5);
+      background: #FAFBFC;
     }
     .panel-title { font-weight: 600; font-size: 15px; }
     .panel-body { flex: 1; overflow-y: auto; }
     
     .container { max-width: 960px; margin: 0 auto; padding: 24px 16px; }
     .card { 
-      background: var(--card-bg);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      background: #FFFFFF;
       border-radius: 16px; 
       padding: 28px; 
       margin-bottom: 20px; 
-      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
-      border: 1px solid rgba(255,255,255,0.3);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      border: 1px solid var(--border);
     }
     h1 { color: var(--text); margin-bottom: 8px; font-size: 1.75em; font-weight: 700; }
     h2 { color: var(--text); margin-bottom: 16px; font-size: 1.25em; font-weight: 600; }
     .subtitle { color: var(--text-muted); margin-bottom: 24px; font-size: 0.95em; }
     
-    /* Buttons */
+    /* Buttons - 移除 transition */
     .btn { 
       padding: 12px 24px; 
       border: none; 
@@ -215,7 +208,6 @@ let FRONTEND_HTML = `<!DOCTYPE html>
       cursor: pointer; 
       font-size: 14px; 
       font-weight: 500;
-      transition: all 0.2s ease-out; 
       display: inline-flex;
       align-items: center;
       gap: 8px;
@@ -232,7 +224,7 @@ let FRONTEND_HTML = `<!DOCTYPE html>
     .btn-success:hover { background: #059669; }
     .btn-sm { padding: 8px 14px; font-size: 13px; }
     .btn-ghost { background: transparent; color: var(--primary); }
-    .btn-ghost:hover { background: rgba(37,99,235,0.1); }
+    .btn-ghost:hover { background: #EFF6FF; }
     .btn-icon { padding: 8px; border-radius: 8px; }
     
     /* Inputs */
@@ -244,12 +236,11 @@ let FRONTEND_HTML = `<!DOCTYPE html>
       margin-bottom: 14px; 
       font-size: 15px;
       background: white;
-      transition: all 0.2s ease-out;
     }
     input:focus { 
       outline: none; 
       border-color: var(--primary); 
-      box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
+      box-shadow: 0 0 0 2px rgba(37,99,235,0.1);
     }
     input::placeholder { color: #94A3B8; }
     
@@ -260,11 +251,10 @@ let FRONTEND_HTML = `<!DOCTYPE html>
     .email-item { 
       padding: 14px 20px; 
       border-bottom: 1px solid var(--border); 
-      cursor: pointer; 
-      transition: all 0.15s ease-out;
+      cursor: pointer;
     }
-    .email-item:hover { background: rgba(37,99,235,0.05); }
-    .email-item.active { background: rgba(37,99,235,0.1); }
+    .email-item:hover { background: #F8FAFC; }
+    .email-item.active { background: #EFF6FF; }
     .email-subject { font-weight: 600; color: var(--text); margin-bottom: 4px; font-size: 14px; }
     .email-meta { font-size: 12px; color: var(--text-muted); }
     
@@ -276,10 +266,9 @@ let FRONTEND_HTML = `<!DOCTYPE html>
       padding: 12px 20px; 
       border-bottom: 1px solid var(--border);
       cursor: pointer;
-      transition: all 0.15s ease-out;
     }
-    .mailbox-list-item:hover { background: rgba(37,99,235,0.05); }
-    .mailbox-list-item.active { background: rgba(37,99,235,0.1); }
+    .mailbox-list-item:hover { background: #F8FAFC; }
+    .mailbox-list-item.active { background: #EFF6FF; }
     .mailbox-address { 
       font-family: 'SF Mono', Monaco, 'Courier New', monospace; 
       color: var(--primary); 
@@ -297,9 +286,8 @@ let FRONTEND_HTML = `<!DOCTYPE html>
       border-radius: 10px;
       margin-bottom: 10px;
       background: white;
-      transition: all 0.15s ease-out;
     }
-    .mailbox-item:hover { border-color: var(--primary); box-shadow: 0 2px 8px rgba(37,99,235,0.1); }
+    .mailbox-item:hover { border-color: var(--primary); }
     
     /* Alerts */
     .error { 
@@ -373,13 +361,12 @@ let FRONTEND_HTML = `<!DOCTYPE html>
       cursor: pointer; 
       border-bottom: 2px solid transparent; 
       margin-bottom: -2px; 
-      transition: all 0.2s ease-out;
       font-weight: 500;
       color: var(--text-muted);
       border-radius: 8px 8px 0 0;
     }
-    .tab:hover { color: var(--primary); background: rgba(37,99,235,0.05); }
-    .tab.active { color: var(--primary); border-bottom-color: var(--primary); background: rgba(37,99,235,0.05); }
+    .tab:hover { color: var(--primary); background: #EFF6FF; }
+    .tab.active { color: var(--primary); border-bottom-color: var(--primary); background: #EFF6FF; }
     
     /* Pagination */
     .pagination { display: flex; justify-content: center; gap: 6px; margin-top: 24px; }
@@ -390,7 +377,6 @@ let FRONTEND_HTML = `<!DOCTYPE html>
       cursor: pointer; 
       background: white;
       font-weight: 500;
-      transition: all 0.15s ease-out;
     }
     .page-btn:hover { background: var(--bg); border-color: var(--primary); }
     .page-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
