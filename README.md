@@ -39,14 +39,11 @@
 
 > ⚠️ **注意**：数据库表结构会在首次部署时自动创建，无需手动执行 SQL！
 
-#### 第三步：创建 Cloudflare API Token
+#### 第三步：获取 Cloudflare API 凭证
 
 1. 进入 [Cloudflare API Tokens](https://dash.cloudflare.com/profile/api-tokens)
-2. 点击 **Create Token**
-3. 选择 **Edit Cloudflare Workers** 模板
-4. 在权限中添加 **D1:Edit** 权限（用于自动初始化数据库）
-5. 点击 **Continue to summary** → **Create Token**
-6. 📝 **复制并保存 Token**（只显示一次！）
+2. 找到 **Global API Key**，点击 **View** 并验证身份
+3. 📝 **复制并保存 Global API Key**
 
 #### 第四步：配置 GitHub Secrets
 
@@ -56,7 +53,8 @@
 
 | Name | Value | 说明 |
 |------|-------|------|
-| `CLOUDFLARE_API_TOKEN` | 你的 API Token | 第三步创建的 Token |
+| `CLOUDFLARE_GLOBAL_API_KEY` | 全局 API Key | 用于部署和数据库初始化 |
+| `CLOUDFLARE_EMAIL` | Cloudflare 账户邮箱 | 与全局 Key 配合使用 |
 | `CLOUDFLARE_ACCOUNT_ID` | 你的 Account ID | 见下方说明 ⬇️ |
 | `D1_DATABASE_ID` | 数据库 ID | 第二步记录的 Database ID |
 | `EMAIL_DOMAIN` | 你的域名 | 例如 `example.com` |
