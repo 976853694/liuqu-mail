@@ -3,7 +3,7 @@ import { createMailbox, findMailboxesByUserId, countMailboxesByUserId, verifyMai
 import { getEmailsByMailbox, getEmailById, countEmails } from './db/email';
 import { register, login, logout, getAuthConfig, invalidateUserSessions } from './auth/auth-service';
 import { requireAuth, requireAdmin, isAuthContext, extractToken } from './middleware/auth';
-import { findUserById, listUsers, updateUserStatus, deleteUser, countUsers, countActiveUsers, updateUserPassword, toUserPublic } from './db/user';
+import { findUserById, listUsers, updateUserStatus, deleteUser, countUsers, countActiveUsers, updateUserPassword, toUserPublic, findUserByUsername, createUser } from './db/user';
 import { hashPassword, verifyPassword } from './auth/password';
  
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -547,6 +547,11 @@ export async function handleApiRequest(
       return corsResponse(await handleAdminDeleteMailbox(request, env, adminMailboxMatch[1]));
     }
 
+    // 调试接口 - 检查环境变量和手动创建管理员
+    if (path === '/api/debug/init' && request.method === 'POST') {
+      return corsResponse(await handleDebugInit(env));
+    }
+
     // 404
     return corsResponse(jsonResponse<ApiResponse>({
       success: false,
@@ -969,4 +974,51 @@ async function handleAdminDeleteMailbox(request: Request, env: Env, mailboxId: s
   await deleteMailbox(env.DB, mailboxId);
 
   return jsonResponse<ApiResponse>({ success: true });
+}
+
+// ==================== 调试函数 ====================
+
+async function handleDebugInit(env: Env): Promise<Response> {
+  const adminUsername = env.ADMIN_USERNAME;
+  const adminPassword = env.ADMIN_PASSWORD;
+
+  // 检查环境变量
+  if (!adminUsername || !adminPassword) {
+    return jsonResponse<ApiResponse>({
+      success: false,
+      error: { 
+        code: 'BAD_REQUEST', 
+        message: `环境变量未配置: ADMIN_USERNAME=${adminUsername ? '已设置' : '未设置'}, ADMIN_PASSWORD=${adminPassword ? '已设置' : '未设置'}` 
+      }
+    }, 400);
+  }
+
+  try {
+    // 检查管理员是否已存在
+    const existingAdmin = await findUserByUsername(env.DB, adminUsername);
+    if (existingAdmin) {
+      return jsonResponse<ApiResponse>({
+        success: true,
+        data: { message: '管理员已存在', username: adminUsername }
+      });
+    }
+
+    // 创建管理员
+    const passwordHash = await hashPassword(adminPassword);
+    const admin = await createUser(env.DB, {
+      username: adminUsername,
+      passwordHash,
+      role: 'admin',
+    });
+
+    return jsonResponse<ApiResponse>({
+      success: true,
+      data: { message: '管理员创建成功', username: admin.username, id: admin.id }
+    }, 201);
+  } catch (error) {
+    return jsonResponse<ApiResponse>({
+      success: false,
+      error: { code: 'INTERNAL_ERROR', message: `创建失败: ${error instanceof Error ? error.message : String(error)}` }
+    }, 500);
+  }
 }
