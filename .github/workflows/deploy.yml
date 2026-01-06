@@ -35,7 +35,8 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: d1 execute temp-email-db --remote --file=schema.sql
+          command: d1 execute ${{ secrets.D1_DATABASE_ID }} --remote --file=schema.sql
+        continue-on-error: true
 
       - name: Deploy to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
