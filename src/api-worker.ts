@@ -8,7 +8,7 @@ import { hashPassword, verifyPassword } from './auth/password';
  
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 
-// 前端 HTML（内嵌）
+// 前端 HTML（内嵌）- 侧边栏布局
 let FRONTEND_HTML = `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -30,6 +30,7 @@ let FRONTEND_HTML = `<!DOCTYPE html>
       --danger: #EF4444;
       --warning: #F59E0B;
       --card-bg: rgba(255,255,255,0.85);
+      --sidebar-width: 240px;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { 
@@ -40,6 +41,156 @@ let FRONTEND_HTML = `<!DOCTYPE html>
       color: var(--text);
       line-height: 1.6;
     }
+    
+    /* Auth Container - 登录页面居中 */
+    .auth-container { 
+      max-width: 420px; 
+      margin: 0 auto; 
+      padding: 60px 16px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    
+    /* App Layout - 侧边栏布局 */
+    .app-layout {
+      display: flex;
+      min-height: 100vh;
+    }
+    
+    /* Sidebar */
+    .sidebar {
+      width: var(--sidebar-width);
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100vh;
+      z-index: 100;
+    }
+    .sidebar-header {
+      padding: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .sidebar-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .sidebar-logo-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .sidebar-logo-icon svg { width: 20px; height: 20px; color: white; }
+    .sidebar-logo-text { font-weight: 700; font-size: 16px; color: var(--text); }
+    
+    .sidebar-user {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .sidebar-avatar {
+      width: 36px;
+      height: 36px;
+      background: var(--primary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .sidebar-username { font-weight: 500; font-size: 14px; }
+    .sidebar-role { font-size: 12px; color: var(--text-muted); }
+    
+    .sidebar-nav {
+      flex: 1;
+      padding: 12px 0;
+      overflow-y: auto;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 20px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s ease-out;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .nav-item:hover { background: rgba(37,99,235,0.05); color: var(--text); }
+    .nav-item.active { background: rgba(37,99,235,0.1); color: var(--primary); }
+    .nav-item svg { width: 20px; height: 20px; }
+    .nav-divider { height: 1px; background: var(--border); margin: 8px 20px; }
+    
+    .sidebar-footer {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+    }
+    .nav-item.logout { color: var(--danger); }
+    .nav-item.logout:hover { background: rgba(239,68,68,0.05); }
+    
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      margin-left: var(--sidebar-width);
+      display: flex;
+      flex-direction: column;
+    }
+    
+    /* Page Container */
+    .page-container {
+      flex: 1;
+      padding: 24px;
+      overflow-y: auto;
+    }
+    
+    /* Two Column Layout for Mailbox */
+    .mailbox-layout {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 20px;
+      height: calc(100vh - 48px);
+    }
+    
+    .mailbox-panel, .email-panel {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+      border: 1px solid rgba(255,255,255,0.3);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    
+    .panel-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255,255,255,0.5);
+    }
+    .panel-title { font-weight: 600; font-size: 15px; }
+    .panel-body { flex: 1; overflow-y: auto; }
+    
     .container { max-width: 960px; margin: 0 auto; padding: 24px 16px; }
     .card { 
       background: var(--card-bg);
@@ -64,15 +215,14 @@ let FRONTEND_HTML = `<!DOCTYPE html>
       font-size: 14px; 
       font-weight: 500;
       transition: all 0.2s ease-out; 
-      margin-right: 8px;
       display: inline-flex;
       align-items: center;
       gap: 8px;
     }
     .btn-primary { background: var(--primary); color: white; }
-    .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
+    .btn-primary:hover { background: var(--primary-hover); }
     .btn-cta { background: var(--cta); color: white; }
-    .btn-cta:hover { background: var(--cta-hover); transform: translateY(-1px); }
+    .btn-cta:hover { background: var(--cta-hover); }
     .btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
     .btn-secondary:hover { background: #F1F5F9; }
     .btn-danger { background: var(--danger); color: white; }
@@ -82,6 +232,7 @@ let FRONTEND_HTML = `<!DOCTYPE html>
     .btn-sm { padding: 8px 14px; font-size: 13px; }
     .btn-ghost { background: transparent; color: var(--primary); }
     .btn-ghost:hover { background: rgba(37,99,235,0.1); }
+    .btn-icon { padding: 8px; border-radius: 8px; }
     
     /* Inputs */
     input { 
@@ -106,18 +257,36 @@ let FRONTEND_HTML = `<!DOCTYPE html>
     /* Email List */
     .email-list { list-style: none; }
     .email-item { 
-      padding: 18px; 
+      padding: 14px 20px; 
       border-bottom: 1px solid var(--border); 
       cursor: pointer; 
       transition: all 0.15s ease-out;
-      border-radius: 8px;
-      margin-bottom: 4px;
     }
-    .email-item:hover { background: #F1F5F9; }
-    .email-subject { font-weight: 600; color: var(--text); margin-bottom: 4px; }
-    .email-meta { font-size: 13px; color: var(--text-muted); }
+    .email-item:hover { background: rgba(37,99,235,0.05); }
+    .email-item.active { background: rgba(37,99,235,0.1); }
+    .email-subject { font-weight: 600; color: var(--text); margin-bottom: 4px; font-size: 14px; }
+    .email-meta { font-size: 12px; color: var(--text-muted); }
     
-    /* Mailbox List */
+    /* Mailbox List in Panel */
+    .mailbox-list-item { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      padding: 12px 20px; 
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: all 0.15s ease-out;
+    }
+    .mailbox-list-item:hover { background: rgba(37,99,235,0.05); }
+    .mailbox-list-item.active { background: rgba(37,99,235,0.1); }
+    .mailbox-address { 
+      font-family: 'SF Mono', Monaco, 'Courier New', monospace; 
+      color: var(--primary); 
+      font-size: 13px;
+      font-weight: 500;
+    }
+    
+    /* Old Mailbox Item for Admin */
     .mailbox-item { 
       display: flex; 
       justify-content: space-between; 
@@ -130,14 +299,6 @@ let FRONTEND_HTML = `<!DOCTYPE html>
       transition: all 0.15s ease-out;
     }
     .mailbox-item:hover { border-color: var(--primary); box-shadow: 0 2px 8px rgba(37,99,235,0.1); }
-    .mailbox-address { 
-      font-family: 'SF Mono', Monaco, 'Courier New', monospace; 
-      color: var(--primary); 
-      cursor: pointer; 
-      font-size: 14px;
-      font-weight: 500;
-    }
-    .mailbox-address:hover { text-decoration: underline; }
     
     /* Alerts */
     .error { 
@@ -274,6 +435,34 @@ let FRONTEND_HTML = `<!DOCTYPE html>
     .status-disabled { color: var(--danger); }
     
     /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar { 
+        transform: translateX(-100%);
+        transition: transform 0.3s ease-out;
+      }
+      .sidebar.open { transform: translateX(0); }
+      .main-content { margin-left: 0; }
+      .mailbox-layout { 
+        grid-template-columns: 1fr;
+        height: auto;
+      }
+      .mobile-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 20px;
+        background: rgba(255,255,255,0.95);
+        backdrop-filter: blur(12px);
+        position: sticky;
+        top: 0;
+        z-index: 50;
+      }
+      .menu-btn { display: block; }
+    }
+    @media (min-width: 769px) {
+      .mobile-header { display: none; }
+      .menu-btn { display: none; }
+    }
     @media (max-width: 640px) {
       .container { padding: 16px 12px; }
       .card { padding: 20px 16px; }
@@ -292,11 +481,13 @@ let FRONTEND_HTML = `<!DOCTYPE html>
   </style>
 </head>
 <body>
-  <div class="container">
-    <!-- 登录/注册区域 -->
-    <div id="auth-section" class="card">
+  <!-- 登录页面 -->
+  <div id="auth-section" class="auth-container">
+    <div class="card">
       <div class="logo">
-        <div class="logo-icon">📧</div>
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        </div>
         <div>
           <h1>临时邮箱</h1>
           <p class="subtitle" style="margin-bottom:0;">安全、私密的临时邮件服务</p>
@@ -322,105 +513,182 @@ let FRONTEND_HTML = `<!DOCTYPE html>
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- 用户区域 -->
-    <div id="user-section" class="hidden">
-      <div class="card">
-        <div class="header">
-          <div class="logo">
-            <div class="logo-icon">📬</div>
-            <h1>我的邮箱</h1>
+  <!-- 主应用布局 -->
+  <div id="app-section" class="app-layout hidden">
+    <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <div class="sidebar-logo-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
           </div>
-          <div class="header-actions">
-            <span id="user-badge" class="badge user-badge"></span>
-            <span id="admin-link" class="hidden"><button class="btn btn-sm btn-secondary" onclick="showAdmin()">管理后台</button></span>
-            <button class="btn btn-sm btn-ghost" onclick="showSettings()">设置</button>
-            <button class="btn btn-sm btn-danger" onclick="handleLogout()">退出</button>
-          </div>
+          <span class="sidebar-logo-text">临时邮箱</span>
         </div>
-        <button class="btn btn-cta" onclick="createNewMailbox()">+ 创建新邮箱</button>
-        <div id="mailbox-list" style="margin-top:20px;"></div>
       </div>
-      <div id="email-section" class="card hidden">
-        <div class="header">
-          <h2 id="current-mailbox"></h2>
-          <button class="btn btn-sm btn-secondary" onclick="refreshEmails()">刷新</button>
-        </div>
-        <div id="email-list"></div>
-      </div>
-      <div id="email-detail" class="card hidden">
-        <button class="btn btn-ghost" onclick="backToList()">← 返回列表</button>
-        <div id="email-content" style="margin-top:20px;"></div>
-      </div>
-    </div>
-
-    <!-- 设置区域 -->
-    <div id="settings-section" class="hidden">
-      <div class="card">
-        <div class="header">
-          <div class="logo">
-            <div class="logo-icon">⚙️</div>
-            <h1>账户设置</h1>
-          </div>
-          <button class="btn btn-sm btn-secondary" onclick="hideSettings()">返回</button>
-        </div>
-        
-        <!-- 修改用户名 -->
-        <div style="margin-bottom:28px;">
-          <h2>修改用户名</h2>
-          <p style="color:var(--text-muted);margin-bottom:16px;">当前用户名: <strong id="current-username"></strong></p>
-          <input type="text" id="new-username" placeholder="新用户名 (至少6位)">
-          <div id="username-error" class="error hidden" role="alert"></div>
-          <div id="username-success" class="success hidden" role="status"></div>
-          <button class="btn btn-primary" onclick="handleUpdateUsername()">修改用户名</button>
-        </div>
-        
-        <hr class="divider">
-        
-        <!-- 修改密码 -->
+      <div class="sidebar-user">
+        <div class="sidebar-avatar" id="user-avatar">U</div>
         <div>
-          <h2>修改密码</h2>
-          <input type="password" id="current-password" placeholder="当前密码" autocomplete="current-password">
-          <input type="password" id="new-password" placeholder="新密码 (至少6位)" autocomplete="new-password">
-          <input type="password" id="confirm-password" placeholder="确认新密码" autocomplete="new-password">
-          <div id="password-error" class="error hidden" role="alert"></div>
-          <div id="password-success" class="success hidden" role="status"></div>
-          <button class="btn btn-primary" onclick="handleUpdatePassword()">修改密码</button>
+          <div class="sidebar-username" id="sidebar-username">用户名</div>
+          <div class="sidebar-role" id="sidebar-role">普通用户</div>
         </div>
       </div>
-    </div>
+      <nav class="sidebar-nav">
+        <div class="nav-item active" id="nav-mailbox" onclick="showPage('mailbox')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          <span>我的邮箱</span>
+        </div>
+        <div class="nav-item" id="nav-settings" onclick="showPage('settings')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span>账户设置</span>
+        </div>
+        <div class="nav-divider"></div>
+        <div class="nav-item hidden" id="nav-admin" onclick="showPage('admin')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <span>管理后台</span>
+        </div>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="nav-item logout" onclick="handleLogout()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          <span>退出登录</span>
+        </div>
+      </div>
+    </aside>
 
-    <!-- 管理员区域 -->
-    <div id="admin-section" class="hidden">
-      <div class="card">
-        <div class="header">
-          <div class="logo">
-            <div class="logo-icon">🛠️</div>
-            <h1>管理后台</h1>
-          </div>
-          <div class="header-actions">
-            <button class="btn btn-sm btn-secondary" onclick="showUserSection()">返回用户中心</button>
-            <button class="btn btn-sm btn-danger" onclick="handleLogout()">退出</button>
-          </div>
-        </div>
-        <div id="stats-container" class="stats-grid"></div>
-        <div class="tabs">
-          <div class="tab active" onclick="showAdminTab('users')">用户管理</div>
-          <div class="tab" onclick="showAdminTab('mailboxes')">邮箱管理</div>
-        </div>
-        <div id="admin-users" class="admin-tab"></div>
-        <div id="admin-mailboxes" class="admin-tab hidden"></div>
+    <!-- 主内容区 -->
+    <main class="main-content">
+      <!-- 移动端顶部栏 -->
+      <div class="mobile-header">
+        <button class="btn btn-icon menu-btn" onclick="toggleSidebar()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <span class="sidebar-logo-text">临时邮箱</span>
+        <div style="width:40px;"></div>
       </div>
-    </div>
+
+      <!-- 邮箱页面 -->
+      <div id="page-mailbox" class="page-container">
+        <div class="mailbox-layout">
+          <!-- 邮箱列表面板 -->
+          <div class="mailbox-panel">
+            <div class="panel-header">
+              <span class="panel-title">邮箱列表</span>
+              <button class="btn btn-sm btn-cta" onclick="createNewMailbox()">+ 新建</button>
+            </div>
+            <div class="panel-body" id="mailbox-list"></div>
+          </div>
+          <!-- 邮件面板 -->
+          <div class="email-panel">
+            <div class="panel-header">
+              <span class="panel-title" id="current-mailbox">选择一个邮箱</span>
+              <button class="btn btn-sm btn-secondary" onclick="refreshEmails()">刷新</button>
+            </div>
+            <div class="panel-body">
+              <div id="email-list">
+                <div class="empty-state">
+                  <div class="empty-state-icon">📬</div>
+                  <p>选择左侧邮箱查看邮件</p>
+                </div>
+              </div>
+              <div id="email-detail" class="hidden" style="padding:20px;">
+                <button class="btn btn-ghost btn-sm" onclick="backToList()">← 返回列表</button>
+                <div id="email-content" style="margin-top:16px;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 设置页面 -->
+      <div id="page-settings" class="page-container hidden">
+        <div class="container">
+          <div class="card">
+            <h1 style="margin-bottom:24px;">账户设置</h1>
+            
+            <!-- 修改用户名 -->
+            <div style="margin-bottom:28px;">
+              <h2>修改用户名</h2>
+              <p style="color:var(--text-muted);margin-bottom:16px;">当前用户名: <strong id="current-username"></strong></p>
+              <input type="text" id="new-username" placeholder="新用户名 (至少6位)">
+              <div id="username-error" class="error hidden" role="alert"></div>
+              <div id="username-success" class="success hidden" role="status"></div>
+              <button class="btn btn-primary" onclick="handleUpdateUsername()">修改用户名</button>
+            </div>
+            
+            <hr class="divider">
+            
+            <!-- 修改密码 -->
+            <div>
+              <h2>修改密码</h2>
+              <input type="password" id="current-password" placeholder="当前密码" autocomplete="current-password">
+              <input type="password" id="new-password" placeholder="新密码 (至少6位)" autocomplete="new-password">
+              <input type="password" id="confirm-password" placeholder="确认新密码" autocomplete="new-password">
+              <div id="password-error" class="error hidden" role="alert"></div>
+              <div id="password-success" class="success hidden" role="status"></div>
+              <button class="btn btn-primary" onclick="handleUpdatePassword()">修改密码</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 管理后台页面 -->
+      <div id="page-admin" class="page-container hidden">
+        <div class="container">
+          <div class="card">
+            <h1 style="margin-bottom:24px;">管理后台</h1>
+            <div id="stats-container" class="stats-grid"></div>
+            <div class="tabs">
+              <div class="tab active" onclick="showAdminTab('users')">用户管理</div>
+              <div class="tab" onclick="showAdminTab('mailboxes')">邮箱管理</div>
+            </div>
+            <div id="admin-users" class="admin-tab"></div>
+        <div id="admin-mailboxes" class="admin-tab hidden"></div>
+          </div>
+        </div>
+      </div>
+    </main>
   </div>
 
   <script>
     let token = localStorage.getItem('token');
     let currentUser = null;
     let currentMailbox = null;
+    let currentMailboxId = null;
     let adminPage = { users: 1, mailboxes: 1 };
 
     if (token) loadUserData();
+
+    // 页面切换
+    function showPage(page) {
+      document.querySelectorAll('.page-container').forEach(p => p.classList.add('hidden'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.getElementById('page-' + page).classList.remove('hidden');
+      document.getElementById('nav-' + page).classList.add('active');
+      if (page === 'settings') {
+        document.getElementById('current-username').textContent = currentUser.username;
+        document.getElementById('new-username').value = '';
+        document.getElementById('current-password').value = '';
+        document.getElementById('new-password').value = '';
+        document.getElementById('confirm-password').value = '';
+        hideError('username-error'); hideError('password-error');
+        document.getElementById('username-success').classList.add('hidden');
+        document.getElementById('password-success').classList.add('hidden');
+      }
+      if (page === 'admin') {
+        loadAdminStats();
+        loadAdminUsers();
+      }
+      // 移动端关闭侧边栏
+      if (window.innerWidth <= 768) {
+        document.getElementById('sidebar').classList.remove('open');
+      }
+    }
+
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('open');
+    }
 
     function showError(id, msg) { const el = document.getElementById(id); el.textContent = msg; el.classList.remove('hidden'); }
     function hideError(id) { document.getElementById(id).classList.add('hidden'); }
@@ -455,11 +723,10 @@ let FRONTEND_HTML = `<!DOCTYPE html>
 
     async function handleLogout() {
       try { await fetch('/api/auth/logout', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } }); } catch(e) {}
-      token = null; currentUser = null; localStorage.removeItem('token');
+      token = null; currentUser = null; currentMailbox = null; currentMailboxId = null;
+      localStorage.removeItem('token');
       document.getElementById('auth-section').classList.remove('hidden');
-      document.getElementById('user-section').classList.add('hidden');
-      document.getElementById('admin-section').classList.add('hidden');
-      document.getElementById('settings-section').classList.add('hidden');
+      document.getElementById('app-section').classList.add('hidden');
     }
 
     async function loadUserData() {
@@ -468,15 +735,19 @@ let FRONTEND_HTML = `<!DOCTYPE html>
         const data = await res.json();
         if (data.success) {
           currentUser = data.data;
-          document.getElementById('user-badge').textContent = currentUser.username;
+          // 更新侧边栏用户信息
+          document.getElementById('sidebar-username').textContent = currentUser.username;
+          document.getElementById('user-avatar').textContent = currentUser.username.charAt(0).toUpperCase();
           if (currentUser.role === 'admin') {
-            document.getElementById('user-badge').className = 'badge admin-badge';
-            document.getElementById('admin-link').classList.remove('hidden');
+            document.getElementById('sidebar-role').textContent = '管理员';
+            document.getElementById('nav-admin').classList.remove('hidden');
           } else {
-            document.getElementById('user-badge').className = 'badge user-badge';
+            document.getElementById('sidebar-role').textContent = '普通用户';
+            document.getElementById('nav-admin').classList.add('hidden');
           }
           document.getElementById('auth-section').classList.add('hidden');
-          document.getElementById('user-section').classList.remove('hidden');
+          document.getElementById('app-section').classList.remove('hidden');
+          showPage('mailbox');
           loadMailboxes();
         } else { handleLogout(); }
       } catch (e) { handleLogout(); }
@@ -489,10 +760,13 @@ let FRONTEND_HTML = `<!DOCTYPE html>
         if (data.success) {
           const list = document.getElementById('mailbox-list');
           if (data.data.length === 0) { 
-            list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><p>暂无邮箱，点击上方按钮创建一个</p></div>'; 
+            list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><p>暂无邮箱，点击上方按钮创建</p></div>'; 
             return; 
           }
-          list.innerHTML = data.data.map(m => '<div class="mailbox-item"><span class="mailbox-address" onclick="selectMailbox(\\'' + m.address + '\\')">' + m.address + '</span><button class="btn btn-sm btn-danger" onclick="deleteMailboxItem(\\'' + m.id + '\\')">删除</button></div>').join('');
+          list.innerHTML = data.data.map(m => {
+            const isActive = currentMailbox === m.address ? ' active' : '';
+            return '<div class="mailbox-list-item' + isActive + '" onclick="selectMailbox(\\'' + m.address + '\\', \\'' + m.id + '\\')"><span class="mailbox-address">' + m.address + '</span><button class="btn btn-sm btn-danger" onclick="event.stopPropagation();deleteMailboxItem(\\'' + m.id + '\\')">删除</button></div>';
+          }).join('');
         }
       } catch(e) { console.error(e); }
     }
@@ -510,17 +784,25 @@ let FRONTEND_HTML = `<!DOCTYPE html>
       if (!confirm('确定删除此邮箱及其所有邮件？')) return;
       try {
         await fetch('/api/mailbox/' + id, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
+        if (currentMailboxId === id) {
+          currentMailbox = null;
+          currentMailboxId = null;
+          document.getElementById('current-mailbox').textContent = '选择一个邮箱';
+          document.getElementById('email-list').innerHTML = '<div class="empty-state"><div class="empty-state-icon">📬</div><p>选择左侧邮箱查看邮件</p></div>';
+        }
         loadMailboxes();
-        document.getElementById('email-section').classList.add('hidden');
       } catch(e) { alert('删除失败'); }
     }
 
-    async function selectMailbox(address) {
+    async function selectMailbox(address, id) {
       currentMailbox = address;
-      document.getElementById('current-mailbox').textContent = '📬 ' + address;
-      document.getElementById('email-section').classList.remove('hidden');
+      currentMailboxId = id;
+      document.getElementById('current-mailbox').textContent = address;
       document.getElementById('email-detail').classList.add('hidden');
       document.getElementById('email-list').classList.remove('hidden');
+      // 更新选中状态
+      document.querySelectorAll('.mailbox-list-item').forEach(item => item.classList.remove('active'));
+      event.currentTarget.classList.add('active');
       refreshEmails();
     }
 
@@ -559,18 +841,6 @@ let FRONTEND_HTML = `<!DOCTYPE html>
     }
 
     // 管理员功能
-    function showAdmin() {
-      document.getElementById('user-section').classList.add('hidden');
-      document.getElementById('admin-section').classList.remove('hidden');
-      loadAdminStats();
-      loadAdminUsers();
-    }
-
-    function showUserSection() {
-      document.getElementById('admin-section').classList.add('hidden');
-      document.getElementById('user-section').classList.remove('hidden');
-    }
-
     function showAdminTab(tab) {
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
       document.querySelectorAll('.admin-tab').forEach(t => t.classList.add('hidden'));
@@ -676,25 +946,6 @@ let FRONTEND_HTML = `<!DOCTYPE html>
     }
 
     // 设置功能
-    function showSettings() {
-      document.getElementById('user-section').classList.add('hidden');
-      document.getElementById('settings-section').classList.remove('hidden');
-      document.getElementById('current-username').textContent = currentUser.username;
-      // 清空输入框
-      document.getElementById('new-username').value = '';
-      document.getElementById('current-password').value = '';
-      document.getElementById('new-password').value = '';
-      document.getElementById('confirm-password').value = '';
-      hideError('username-error'); hideError('password-error');
-      document.getElementById('username-success').classList.add('hidden');
-      document.getElementById('password-success').classList.add('hidden');
-    }
-
-    function hideSettings() {
-      document.getElementById('settings-section').classList.add('hidden');
-      document.getElementById('user-section').classList.remove('hidden');
-    }
-
     function showSuccess(id, msg) {
       const el = document.getElementById(id);
       el.textContent = msg;
@@ -713,11 +964,13 @@ let FRONTEND_HTML = `<!DOCTYPE html>
         if (data.success) {
           showSuccess('username-success', '用户名修改成功！');
           currentUser.username = newUsername;
-          document.getElementById('user-badge').textContent = newUsername;
+          document.getElementById('sidebar-username').textContent = newUsername;
+          document.getElementById('user-avatar').textContent = newUsername.charAt(0).toUpperCase();
           document.getElementById('current-username').textContent = newUsername;
           document.getElementById('new-username').value = '';
         } else { showError('username-error', data.error.message); }
       } catch(e) { showError('username-error', '修改失败，请重试'); }
+    }
     }
 
     async function handleUpdatePassword() {
