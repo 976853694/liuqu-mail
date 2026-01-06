@@ -29,12 +29,12 @@
 
 #### 第二步：创建 D1 数据库
 
-1. 登录 [Cloudflare Dashboard](https://dash.cloudflare.com)
+1. 登录 [Cloudflare 管理后台](https://dash.cloudflare.com)（没有账号先注册）
 2. 左侧菜单选择 **Workers & Pages** → **D1 SQL Database**
 3. 点击 **Create database**
 4. 数据库名称填写：`temp-email-db`
 5. 点击 **Create**
-6. 📝 **记录下 Database ID**（页面上会显示）
+6. 📝 **记录下 Database ID**（页面上会显示，类似 `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`）
 
 #### 第三步：初始化数据库
 
@@ -86,12 +86,25 @@ CREATE INDEX IF NOT EXISTS idx_emails_received_at ON emails(received_at);
 2. 点击 **Settings** → **Secrets and variables** → **Actions**
 3. 点击 **New repository secret**，添加以下 Secrets：
 
-| Name | Value | 说明 |
-|------|-------|------|
+| Name | Value | 如何获取 |
+|------|-------|----------|
 | `CLOUDFLARE_API_TOKEN` | 你的 API Token | 第四步创建的 Token |
-| `CLOUDFLARE_ACCOUNT_ID` | 你的 Account ID | Dashboard 右侧栏 → Account ID |
+| `CLOUDFLARE_ACCOUNT_ID` | 你的 Account ID | 见下方说明 ⬇️ |
 | `D1_DATABASE_ID` | 数据库 ID | 第二步记录的 Database ID |
 | `EMAIL_DOMAIN` | 你的域名 | 例如 `example.com` |
+
+**如何找到 Account ID：**
+
+1. 登录 https://dash.cloudflare.com
+2. 点击左侧菜单 **Workers & Pages**
+3. 在页面**右侧边栏**可以看到 **Account ID**
+4. 点击旁边的复制按钮即可复制
+
+![Account ID 位置示意](https://developers.cloudflare.com/assets/account-id-location_hu8b0c8e0e7e8e8e8e8e8e8e8e8e8e8e8_12345_1200x0_resize_q75_box.jpg)
+
+或者也可以：
+1. 点击任意一个域名进入
+2. 在**概述**页面右侧栏也能看到 **Account ID**
 
 > 💡 所有敏感信息都通过 Secrets 配置，无需修改代码文件！
 
@@ -109,7 +122,7 @@ CREATE INDEX IF NOT EXISTS idx_emails_received_at ON emails(received_at);
 
 #### 第七步：配置 Email Routing
 
-1. 在 Cloudflare Dashboard 选择你的域名
+1. 在 [Cloudflare 管理后台](https://dash.cloudflare.com) 选择你的域名
 2. 点击 **Email** → **Email Routing**
 3. 如果未启用，点击 **Enable Email Routing** 并按提示添加 DNS 记录
 4. 点击 **Routing rules** → **Catch-all address**
