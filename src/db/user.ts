@@ -177,6 +177,17 @@ export async function countActiveUsers(db: D1Database): Promise<number> {
 }
 
 /**
+ * 检查是否存在管理员用户
+ */
+export async function hasAdminUser(db: D1Database): Promise<boolean> {
+  const result = await db
+    .prepare("SELECT COUNT(*) as count FROM users WHERE role = 'admin'")
+    .first<{ count: number }>();
+
+  return (result?.count || 0) > 0;
+}
+
+/**
  * 将 User 转换为 UserPublic（移除密码）
  */
 export function toUserPublic(user: User): UserPublic {

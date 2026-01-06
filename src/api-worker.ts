@@ -3,7 +3,7 @@ import { createMailbox, findMailboxesByUserId, countMailboxesByUserId, verifyMai
 import { getEmailsByMailbox, getEmailById, countEmails } from './db/email';
 import { register, login, logout, getAuthConfig, invalidateUserSessions } from './auth/auth-service';
 import { requireAuth, requireAdmin, isAuthContext, extractToken } from './middleware/auth';
-import { findUserById, listUsers, updateUserStatus, deleteUser, countUsers, countActiveUsers, updateUserPassword, updateUsername, toUserPublic, findUserByUsername, createUser } from './db/user';
+import { findUserById, listUsers, updateUserStatus, deleteUser, countUsers, countActiveUsers, updateUserPassword, updateUsername, toUserPublic, findUserByUsername, createUser, hasAdminUser } from './db/user';
 import { hashPassword, verifyPassword } from './auth/password';
  
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -1126,6 +1126,15 @@ async function handleAdminDeleteMailbox(request: Request, env: Env, mailboxId: s
 // ==================== 调试函数 ====================
 
 async function handleDebugInit(env: Env): Promise<Response> {
+  // 检查是否已有管理员，如果有则禁止访问
+  const adminExists = await hasAdminUser(env.DB);
+  if (adminExists) {
+    return jsonResponse<ApiResponse>({
+      success: false,
+      error: { code: 'FORBIDDEN', message: '管理员已存在，此接口已禁用' }
+    }, 403);
+  }
+
   const adminUsername = env.ADMIN_USERNAME;
   const adminPassword = env.ADMIN_PASSWORD;
 
@@ -1148,15 +1157,6 @@ async function handleDebugInit(env: Env): Promise<Response> {
   }
 
   try {
-    // 检查管理员是否已存在
-    const existingAdmin = await findUserByUsername(env.DB, adminUsername);
-    if (existingAdmin) {
-      return jsonResponse<ApiResponse>({
-        success: true,
-        data: { message: '管理员已存在', username: adminUsername, env: debugInfo }
-      });
-    }
-
     // 创建管理员
     const passwordHash = await hashPassword(adminPassword);
     const admin = await createUser(env.DB, {
@@ -1179,6 +1179,15 @@ async function handleDebugInit(env: Env): Promise<Response> {
 }
 
 async function handleDebugSetupAdmin(request: Request, env: Env): Promise<Response> {
+  // 检查是否已有管理员，如果有则禁止访问
+  const adminExists = await hasAdminUser(env.DB);
+  if (adminExists) {
+    return jsonResponse<ApiResponse>({
+      success: false,
+      error: { code: 'FORBIDDEN', message: '管理员已存在，此接口已禁用' }
+    }, 403);
+  }
+
   const body = await request.json() as { username?: string; password?: string };
   const { username, password } = body;
 
@@ -1206,24 +1215,13 @@ async function handleDebugSetupAdmin(request: Request, env: Env): Promise<Respon
   }
 
   try {
-    // 检查是否已有管理员
-    const existingAdmin = await findUserByUsername(env.DB, username);
-    
-    if (existingAdmin) {
-      // 如果用户名已存在且是管理员，更新密码
-      if (existingAdmin.role === 'admin') {
-        const passwordHash = await hashPassword(password);
-        await updateUserPassword(env.DB, existingAdmin.id, passwordHash);
-        return jsonResponse<ApiResponse>({
-          success: true,
-          data: { message: '管理员密码已更新', username }
-        });
-      } else {
-        return jsonResponse<ApiResponse>({
-          success: false,
-          error: { code: 'CONFLICT', message: '该用户名已被普通用户使用' }
-        }, 409);
-      }
+    // 检查用户名是否已被使用
+    const existingUser = await findUserByUsername(env.DB, username);
+    if (existingUser) {
+      return jsonResponse<ApiResponse>({
+        success: false,
+        error: { code: 'CONFLICT', message: '该用户名已被使用' }
+      }, 409);
     }
 
     // 创建新管理员
