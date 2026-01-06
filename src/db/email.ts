@@ -121,3 +121,14 @@ export async function deleteExpiredEmails(
 
   return result.meta.changes || 0;
 }
+
+/**
+ * 获取邮件总数
+ */
+export async function countEmails(db: D1Database): Promise<number> {
+  const result = await db
+    .prepare('SELECT COUNT(*) as count FROM emails')
+    .first<{ count: number }>();
+
+  return result?.count || 0;
+}

@@ -1,11 +1,14 @@
 import { handleEmailMessage } from './email-worker';
 import { handleApiRequest } from './api-worker';
 import { cleanupExpiredData } from './cleanup';
+import { initializeAdmin } from './init';
 import type { Env } from './types';
 
 export default {
   // HTTP 请求处理 (API)
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    // 确保管理员账户存在
+    ctx.waitUntil(initializeAdmin(env));
     return handleApiRequest(request, env, ctx);
   },
 

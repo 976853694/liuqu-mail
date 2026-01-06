@@ -7,6 +7,13 @@ RETENTION_HOURS = "24"
 RATE_LIMIT_PER_MINUTE = "60"
 # EMAIL_DOMAIN 通过 GitHub Secrets 注入，无需手动修改
 EMAIL_DOMAIN = "example.com"
+# 用户认证相关配置
+ALLOW_REGISTRATION = "true"
+MAX_MAILBOXES_PER_USER = "5"
+SESSION_EXPIRY_HOURS = "24"
+# 初始管理员账户（通过 GitHub Secrets 注入）
+ADMIN_USERNAME = "admin"
+ADMIN_PASSWORD = "changeme123"
 
 [[d1_databases]]
 binding = "DB"

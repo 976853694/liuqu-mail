@@ -1,14 +1,15 @@
 # 📧 临时邮箱 (Temp Mail)
 
-基于 Cloudflare Workers 的免费临时邮箱系统，一键部署，无需服务器。
+基于 Cloudflare Workers 的免费临时邮箱系统，支持用户注册登录和管理员后台，一键部署，无需服务器。
 
 [![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/976853694/liuqu-mail)
 
 ## ✨ 功能特性
 
+- 👤 用户注册/登录系统
+- 🔐 管理员后台（用户管理、邮箱管理、系统统计）
 - 🎲 随机生成临时邮箱地址
 - 📬 实时接收邮件
-- 🔐 访问令牌认证，保护隐私
 - ⏰ 可配置邮件保留时长
 - 🧹 自动清理过期数据
 - 📱 响应式设计，支持手机访问
@@ -29,86 +30,45 @@
 
 #### 第二步：创建 D1 数据库
 
-1. 登录 [Cloudflare 管理后台](https://dash.cloudflare.com)（没有账号先注册）
+1. 登录 [Cloudflare 管理后台](https://dash.cloudflare.com)
 2. 左侧菜单选择 **Workers & Pages** → **D1 SQL Database**
 3. 点击 **Create database**
 4. 数据库名称填写：`temp-email-db`
 5. 点击 **Create**
-6. 📝 **记录下 Database ID**（页面上会显示，类似 `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`）
+6. 📝 **记录下 Database ID**（类似 `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`）
 
-#### 第三步：初始化数据库
+> ⚠️ **注意**：数据库表结构会在首次部署时自动创建，无需手动执行 SQL！
 
-1. 进入刚创建的数据库页面
-2. 点击 **Console** 标签
-3. 复制以下 SQL 并粘贴到控制台：
-
-```sql
-CREATE TABLE IF NOT EXISTS mailboxes (
-  id TEXT PRIMARY KEY,
-  address TEXT UNIQUE NOT NULL,
-  token TEXT NOT NULL,
-  created_at TEXT NOT NULL,
-  expires_at TEXT NOT NULL
-);
-
-CREATE INDEX IF NOT EXISTS idx_mailboxes_address ON mailboxes(address);
-CREATE INDEX IF NOT EXISTS idx_mailboxes_expires_at ON mailboxes(expires_at);
-CREATE INDEX IF NOT EXISTS idx_mailboxes_token ON mailboxes(token);
-
-CREATE TABLE IF NOT EXISTS emails (
-  id TEXT PRIMARY KEY,
-  mailbox_id TEXT NOT NULL,
-  from_address TEXT NOT NULL,
-  to_address TEXT NOT NULL,
-  subject TEXT,
-  body TEXT,
-  received_at TEXT NOT NULL,
-  FOREIGN KEY (mailbox_id) REFERENCES mailboxes(id) ON DELETE CASCADE
-);
-
-CREATE INDEX IF NOT EXISTS idx_emails_mailbox_id ON emails(mailbox_id);
-CREATE INDEX IF NOT EXISTS idx_emails_received_at ON emails(received_at);
-```
-
-4. 点击 **Execute** 执行
-
-#### 第四步：创建 Cloudflare API Token
+#### 第三步：创建 Cloudflare API Token
 
 1. 进入 [Cloudflare API Tokens](https://dash.cloudflare.com/profile/api-tokens)
 2. 点击 **Create Token**
 3. 选择 **Edit Cloudflare Workers** 模板
-4. 点击 **Continue to summary** → **Create Token**
-5. 📝 **复制并保存 Token**（只显示一次！）
+4. 在权限中添加 **D1:Edit** 权限（用于自动初始化数据库）
+5. 点击 **Continue to summary** → **Create Token**
+6. 📝 **复制并保存 Token**（只显示一次！）
 
-#### 第五步：配置 GitHub Secrets
+#### 第四步：配置 GitHub Secrets
 
 1. 进入你 Fork 的仓库
 2. 点击 **Settings** → **Secrets and variables** → **Actions**
 3. 点击 **New repository secret**，添加以下 Secrets：
 
-| Name | Value | 如何获取 |
-|------|-------|----------|
-| `CLOUDFLARE_API_TOKEN` | 你的 API Token | 第四步创建的 Token |
+| Name | Value | 说明 |
+|------|-------|------|
+| `CLOUDFLARE_API_TOKEN` | 你的 API Token | 第三步创建的 Token |
 | `CLOUDFLARE_ACCOUNT_ID` | 你的 Account ID | 见下方说明 ⬇️ |
 | `D1_DATABASE_ID` | 数据库 ID | 第二步记录的 Database ID |
 | `EMAIL_DOMAIN` | 你的域名 | 例如 `example.com` |
+| `ADMIN_USERNAME` | 管理员用户名 | 首次部署自动创建 |
+| `ADMIN_PASSWORD` | 管理员密码 | 至少8位，含字母和数字 |
 
 **如何找到 Account ID：**
-
 1. 登录 https://dash.cloudflare.com
 2. 点击左侧菜单 **Workers & Pages**
 3. 在页面**右侧边栏**可以看到 **Account ID**
-4. 点击旁边的复制按钮即可复制
 
-![Account ID 位置示意](https://developers.cloudflare.com/assets/account-id-location_hu8b0c8e0e7e8e8e8e8e8e8e8e8e8e8e8_12345_1200x0_resize_q75_box.jpg)
-
-或者也可以：
-1. 点击任意一个域名进入
-2. 在**概述**页面右侧栏也能看到 **Account ID**
-
-> 💡 所有敏感信息都通过 Secrets 配置，无需修改代码文件！
-
-#### 第六步：触发部署
+#### 第五步：触发部署
 
 配置完 Secrets 后，有两种方式触发部署：
 
@@ -120,7 +80,12 @@ CREATE INDEX IF NOT EXISTS idx_emails_received_at ON emails(received_at);
 **方式 2**：推送代码触发
 - 对仓库做任意修改并推送，会自动触发部署
 
-#### 第七步：配置 Email Routing
+> 🎉 部署时会自动：
+> - 初始化数据库表结构
+> - 创建管理员账户
+> - 部署 Worker
+
+#### 第六步：配置 Email Routing
 
 1. 在 [Cloudflare 管理后台](https://dash.cloudflare.com) 选择你的域名
 2. 点击 **Email** → **Email Routing**
@@ -130,61 +95,53 @@ CREATE INDEX IF NOT EXISTS idx_emails_received_at ON emails(received_at);
 6. 选择 `temp-email-system`
 7. 点击 **Save**
 
-#### 第八步：部署前端（可选）
-
-前端可以单独部署到 Cloudflare Pages：
-
-1. **Workers & Pages** → **Create** → **Pages** → **Connect to Git**
-2. 选择你 Fork 的仓库
-3. 配置：
-   - **Root directory (advanced)**: `frontend`
-   - **Build command**: 留空
-   - **Build output directory**: 留空
-4. 点击 **Save and Deploy**
-5. 部署完成后，编辑 `frontend/app.js`，将 `API_BASE` 改为你的 Worker URL：
-   ```javascript
-   const API_BASE = 'https://temp-email-system.你的用户名.workers.dev/api';
-   ```
-
 ### 🎉 完成！
 
-访问你的 Worker URL 或 Pages URL 即可使用临时邮箱。
+访问你的 Worker URL 即可使用临时邮箱：
+- 普通用户：注册登录后创建邮箱
+- 管理员：使用配置的管理员账户登录，可访问管理后台
 
 ---
 
 ## 📖 API 文档
 
-### 创建邮箱
+详细 API 文档请参考 [API.md](./API.md)
 
-```http
-POST /api/mailbox
-```
+### 认证相关
 
-响应：
-```json
-{
-  "success": true,
-  "data": {
-    "address": "abc123xyz@your-domain.com",
-    "token": "your-access-token",
-    "expiresAt": "2024-01-02T00:00:00.000Z"
-  }
-}
-```
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | /api/auth/register | 用户注册 |
+| POST | /api/auth/login | 用户登录 |
+| POST | /api/auth/logout | 用户登出 |
 
-### 获取邮件列表
+### 用户相关
 
-```http
-GET /api/mailbox/{address}/emails
-Authorization: Bearer {token}
-```
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | /api/user/profile | 获取用户资料 |
+| PUT | /api/user/password | 修改密码 |
 
-### 获取邮件详情
+### 邮箱相关
 
-```http
-GET /api/mailbox/{address}/emails/{id}
-Authorization: Bearer {token}
-```
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | /api/mailbox | 创建邮箱 |
+| GET | /api/mailboxes | 获取邮箱列表 |
+| DELETE | /api/mailbox/:id | 删除邮箱 |
+| GET | /api/mailbox/:address/emails | 获取邮件列表 |
+| GET | /api/mailbox/:address/emails/:id | 获取邮件详情 |
+
+### 管理员相关
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | /api/admin/stats | 系统统计 |
+| GET | /api/admin/users | 用户列表 |
+| PUT | /api/admin/users/:id/status | 更新用户状态 |
+| DELETE | /api/admin/users/:id | 删除用户 |
+| GET | /api/admin/mailboxes | 邮箱列表 |
+| DELETE | /api/admin/mailboxes/:id | 删除邮箱 |
 
 ---
 
@@ -197,6 +154,9 @@ Authorization: Bearer {token}
 | `RETENTION_HOURS` | 邮件保留时长（小时） | 24 |
 | `RATE_LIMIT_PER_MINUTE` | 每分钟请求限制 | 60 |
 | `EMAIL_DOMAIN` | 邮箱域名 | - |
+| `ALLOW_REGISTRATION` | 是否开放注册 | true |
+| `MAX_MAILBOXES_PER_USER` | 每用户最大邮箱数 | 5 |
+| `SESSION_EXPIRY_HOURS` | 会话过期时间（小时） | 24 |
 
 ---
 
@@ -205,6 +165,10 @@ Authorization: Bearer {token}
 ```bash
 # 安装依赖
 npm install
+
+# 创建本地数据库
+npx wrangler d1 create temp-email-db --local
+npx wrangler d1 execute temp-email-db --local --file=schema.sql
 
 # 本地运行
 npm run dev
@@ -225,4 +189,3 @@ MIT License
 
 - [Cloudflare Workers](https://workers.cloudflare.com/)
 - [Cloudflare D1](https://developers.cloudflare.com/d1/)
-- [postal-mime](https://github.com/postalsys/postal-mime)

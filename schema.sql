@@ -1,8 +1,36 @@
+-- 用户表
+CREATE TABLE IF NOT EXISTS users (
+  id TEXT PRIMARY KEY,
+  username TEXT UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL,
+  role TEXT NOT NULL DEFAULT 'user',
+  status TEXT NOT NULL DEFAULT 'active',
+  created_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+CREATE INDEX IF NOT EXISTS idx_users_status ON users(status);
+
+-- 会话表
+CREATE TABLE IF NOT EXISTS sessions (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  token TEXT UNIQUE NOT NULL,
+  created_at TEXT NOT NULL,
+  expires_at TEXT NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token);
+CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions(expires_at);
+
 -- 邮箱表
 CREATE TABLE IF NOT EXISTS mailboxes (
   id TEXT PRIMARY KEY,
   address TEXT UNIQUE NOT NULL,
   token TEXT NOT NULL,
+  user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
   created_at TEXT NOT NULL,
   expires_at TEXT NOT NULL
 );
@@ -10,6 +38,7 @@ CREATE TABLE IF NOT EXISTS mailboxes (
 CREATE INDEX IF NOT EXISTS idx_mailboxes_address ON mailboxes(address);
 CREATE INDEX IF NOT EXISTS idx_mailboxes_expires_at ON mailboxes(expires_at);
 CREATE INDEX IF NOT EXISTS idx_mailboxes_token ON mailboxes(token);
+CREATE INDEX IF NOT EXISTS idx_mailboxes_user_id ON mailboxes(user_id);
 
 -- 邮件表
 CREATE TABLE IF NOT EXISTS emails (
