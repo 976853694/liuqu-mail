@@ -1,0 +1,21 @@
+name = "temp-email-system"
+main = "src/index.ts"
+compatibility_date = "2024-11-01"
+
+[vars]
+RETENTION_HOURS = "24"
+RATE_LIMIT_PER_MINUTE = "60"
+EMAIL_DOMAIN = "tempmail.example.com"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "temp-email-db"
+database_id = "your-database-id-here"
+
+# Email Worker 配置
+# 需要在 Cloudflare Dashboard 中配置 Email Routing
+# 将 catch-all 或特定地址路由到此 Worker
+
+# Cron Trigger 配置 - 每小时运行一次清理
+[triggers]
+crons = ["0 * * * *"]

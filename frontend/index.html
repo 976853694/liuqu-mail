@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>临时邮箱 - Temp Email</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>📧 临时邮箱</h1>
+      <p class="subtitle">快速获取一个临时邮箱地址，用于接收验证邮件</p>
+    </header>
+
+    <main>
+      <!-- 首页视图 -->
+      <div id="home-view" class="view">
+        <button id="create-mailbox-btn" class="btn-primary">
+          生成临时邮箱
+        </button>
+        
+        <div id="saved-mailbox" class="saved-mailbox hidden">
+          <p>上次使用的邮箱：</p>
+          <div class="mailbox-card" id="saved-mailbox-card"></div>
+        </div>
+      </div>
+
+      <!-- 邮箱视图 -->
+      <div id="mailbox-view" class="view hidden">
+        <div class="mailbox-header">
+          <div class="email-address-container">
+            <span id="email-address" class="email-address"></span>
+            <button id="copy-btn" class="btn-icon" title="复制邮箱地址">📋</button>
+          </div>
+          <div class="expiry-info">
+            <span>过期时间：</span>
+            <span id="expiry-countdown"></span>
+          </div>
+        </div>
+
+        <div class="email-list-header">
+          <h2>收件箱</h2>
+          <button id="refresh-btn" class="btn-secondary">🔄 刷新</button>
+        </div>
+
+        <div id="email-list" class="email-list">
+          <div class="empty-state">
+            <p>📭 暂无邮件</p>
+            <p class="hint">等待邮件到达...</p>
+          </div>
+        </div>
+
+        <button id="new-mailbox-btn" class="btn-secondary">
+          生成新邮箱
+        </button>
+      </div>
+
+      <!-- 邮件详情视图 -->
+      <div id="email-detail-view" class="view hidden">
+        <button id="back-btn" class="btn-back">← 返回列表</button>
+        
+        <div class="email-detail">
+          <div class="email-header">
+            <h2 id="email-subject">邮件主题</h2>
+            <div class="email-meta">
+              <span>发件人：<span id="email-from"></span></span>
+              <span>时间：<span id="email-time"></span></span>
+            </div>
+          </div>
+          <div id="email-body" class="email-body"></div>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <p>基于 Cloudflare Workers 构建</p>
+    </footer>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
