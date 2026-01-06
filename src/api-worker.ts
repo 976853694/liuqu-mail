@@ -14,76 +14,312 @@ let FRONTEND_HTML = `<!DOCTYPE html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>临时邮箱</title>
+  <title>临时邮箱 - 安全私密的临时邮件服务</title>
   <style>
+    :root {
+      --primary: #2563EB;
+      --primary-hover: #1D4ED8;
+      --secondary: #3B82F6;
+      --cta: #F97316;
+      --cta-hover: #EA580C;
+      --bg: #F8FAFC;
+      --text: #1E293B;
+      --text-muted: #64748B;
+      --border: #E2E8F0;
+      --success: #10B981;
+      --danger: #EF4444;
+      --warning: #F59E0B;
+      --card-bg: rgba(255,255,255,0.85);
+    }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
-    .container { max-width: 900px; margin: 0 auto; padding: 20px; }
-    .card { background: rgba(255,255,255,0.95); border-radius: 12px; padding: 24px; margin-bottom: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
-    h1 { color: #333; margin-bottom: 16px; font-size: 1.8em; }
-    h2 { color: #444; margin-bottom: 12px; font-size: 1.3em; }
-    .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; transition: all 0.2s; margin-right: 8px; }
-    .btn-primary { background: #667eea; color: white; }
-    .btn-primary:hover { background: #5a6fd6; }
-    .btn-secondary { background: #6c757d; color: white; }
-    .btn-secondary:hover { background: #5a6268; }
-    .btn-danger { background: #dc3545; color: white; }
-    .btn-danger:hover { background: #c82333; }
-    .btn-success { background: #28a745; color: white; }
-    .btn-success:hover { background: #218838; }
-    .btn-sm { padding: 6px 12px; font-size: 12px; }
-    input { padding: 12px; border: 1px solid #ddd; border-radius: 6px; width: 100%; margin-bottom: 12px; font-size: 14px; }
-    input:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,0.1); }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif; 
+      background: linear-gradient(135deg, #1E3A8A 0%, #3B82F6 50%, #0EA5E9 100%);
+      background-attachment: fixed;
+      min-height: 100vh;
+      color: var(--text);
+      line-height: 1.6;
+    }
+    .container { max-width: 960px; margin: 0 auto; padding: 24px 16px; }
+    .card { 
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 16px; 
+      padding: 28px; 
+      margin-bottom: 20px; 
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+    h1 { color: var(--text); margin-bottom: 8px; font-size: 1.75em; font-weight: 700; }
+    h2 { color: var(--text); margin-bottom: 16px; font-size: 1.25em; font-weight: 600; }
+    .subtitle { color: var(--text-muted); margin-bottom: 24px; font-size: 0.95em; }
+    
+    /* Buttons */
+    .btn { 
+      padding: 12px 24px; 
+      border: none; 
+      border-radius: 8px; 
+      cursor: pointer; 
+      font-size: 14px; 
+      font-weight: 500;
+      transition: all 0.2s ease-out; 
+      margin-right: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
+    .btn-cta { background: var(--cta); color: white; }
+    .btn-cta:hover { background: var(--cta-hover); transform: translateY(-1px); }
+    .btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: #F1F5F9; }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-danger:hover { background: #DC2626; }
+    .btn-success { background: var(--success); color: white; }
+    .btn-success:hover { background: #059669; }
+    .btn-sm { padding: 8px 14px; font-size: 13px; }
+    .btn-ghost { background: transparent; color: var(--primary); }
+    .btn-ghost:hover { background: rgba(37,99,235,0.1); }
+    
+    /* Inputs */
+    input { 
+      padding: 14px 16px; 
+      border: 1px solid var(--border); 
+      border-radius: 8px; 
+      width: 100%; 
+      margin-bottom: 14px; 
+      font-size: 15px;
+      background: white;
+      transition: all 0.2s ease-out;
+    }
+    input:focus { 
+      outline: none; 
+      border-color: var(--primary); 
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
+    }
+    input::placeholder { color: #94A3B8; }
+    
     .hidden { display: none; }
+    
+    /* Email List */
     .email-list { list-style: none; }
-    .email-item { padding: 16px; border-bottom: 1px solid #eee; cursor: pointer; transition: background 0.2s; }
-    .email-item:hover { background: #f8f9fa; }
-    .mailbox-item { display: flex; justify-content: space-between; align-items: center; padding: 16px; border-bottom: 1px solid #eee; }
-    .mailbox-address { font-family: monospace; color: #667eea; cursor: pointer; font-size: 14px; }
+    .email-item { 
+      padding: 18px; 
+      border-bottom: 1px solid var(--border); 
+      cursor: pointer; 
+      transition: all 0.15s ease-out;
+      border-radius: 8px;
+      margin-bottom: 4px;
+    }
+    .email-item:hover { background: #F1F5F9; }
+    .email-subject { font-weight: 600; color: var(--text); margin-bottom: 4px; }
+    .email-meta { font-size: 13px; color: var(--text-muted); }
+    
+    /* Mailbox List */
+    .mailbox-item { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      padding: 16px 18px; 
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 10px;
+      background: white;
+      transition: all 0.15s ease-out;
+    }
+    .mailbox-item:hover { border-color: var(--primary); box-shadow: 0 2px 8px rgba(37,99,235,0.1); }
+    .mailbox-address { 
+      font-family: 'SF Mono', Monaco, 'Courier New', monospace; 
+      color: var(--primary); 
+      cursor: pointer; 
+      font-size: 14px;
+      font-weight: 500;
+    }
     .mailbox-address:hover { text-decoration: underline; }
-    .error { color: #dc3545; margin-bottom: 12px; padding: 10px; background: #f8d7da; border-radius: 6px; }
-    .success { color: #28a745; margin-bottom: 12px; padding: 10px; background: #d4edda; border-radius: 6px; }
-    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    .user-badge { background: #667eea; color: white; padding: 6px 12px; border-radius: 20px; font-size: 13px; margin-right: 10px; }
-    .admin-badge { background: #ffc107; color: #333; padding: 6px 12px; border-radius: 20px; font-size: 13px; margin-right: 10px; }
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 20px; }
-    .stat-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px; text-align: center; }
-    .stat-value { font-size: 2em; font-weight: bold; }
-    .stat-label { font-size: 0.9em; opacity: 0.9; }
+    
+    /* Alerts */
+    .error { 
+      color: #991B1B; 
+      margin-bottom: 14px; 
+      padding: 12px 16px; 
+      background: #FEF2F2; 
+      border-radius: 8px;
+      border: 1px solid #FECACA;
+      font-size: 14px;
+    }
+    .success { 
+      color: #065F46; 
+      margin-bottom: 14px; 
+      padding: 12px 16px; 
+      background: #ECFDF5; 
+      border-radius: 8px;
+      border: 1px solid #A7F3D0;
+      font-size: 14px;
+    }
+    
+    /* Header */
+    .header { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .header-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    
+    /* Badges */
+    .badge { 
+      padding: 6px 14px; 
+      border-radius: 20px; 
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .user-badge { background: var(--primary); color: white; }
+    .admin-badge { background: var(--warning); color: #78350F; }
+    
+    /* Stats Grid */
+    .stats-grid { 
+      display: grid; 
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); 
+      gap: 16px; 
+      margin-bottom: 24px; 
+    }
+    .stat-card { 
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); 
+      color: white; 
+      padding: 20px; 
+      border-radius: 12px; 
+      text-align: center;
+    }
+    .stat-value { font-size: 2em; font-weight: 700; }
+    .stat-label { font-size: 0.85em; opacity: 0.9; margin-top: 4px; }
+    
+    /* Table */
     .table { width: 100%; border-collapse: collapse; margin-top: 16px; }
-    .table th, .table td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
-    .table th { background: #f8f9fa; font-weight: 600; }
-    .table tr:hover { background: #f8f9fa; }
-    .tabs { display: flex; border-bottom: 2px solid #eee; margin-bottom: 20px; }
-    .tab { padding: 12px 24px; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.2s; }
-    .tab:hover { color: #667eea; }
-    .tab.active { color: #667eea; border-bottom-color: #667eea; font-weight: 600; }
-    .pagination { display: flex; justify-content: center; gap: 8px; margin-top: 20px; }
-    .page-btn { padding: 8px 14px; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; background: white; }
-    .page-btn:hover { background: #f8f9fa; }
-    .page-btn.active { background: #667eea; color: white; border-color: #667eea; }
-    pre { white-space: pre-wrap; word-wrap: break-word; background: #f8f9fa; padding: 16px; border-radius: 6px; }
+    .table th, .table td { padding: 14px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+    .table th { background: var(--bg); font-weight: 600; font-size: 13px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .table tr:hover { background: #F8FAFC; }
+    .table code { background: #F1F5F9; padding: 4px 8px; border-radius: 4px; font-size: 13px; }
+    
+    /* Tabs */
+    .tabs { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 24px; gap: 4px; }
+    .tab { 
+      padding: 14px 24px; 
+      cursor: pointer; 
+      border-bottom: 2px solid transparent; 
+      margin-bottom: -2px; 
+      transition: all 0.2s ease-out;
+      font-weight: 500;
+      color: var(--text-muted);
+      border-radius: 8px 8px 0 0;
+    }
+    .tab:hover { color: var(--primary); background: rgba(37,99,235,0.05); }
+    .tab.active { color: var(--primary); border-bottom-color: var(--primary); background: rgba(37,99,235,0.05); }
+    
+    /* Pagination */
+    .pagination { display: flex; justify-content: center; gap: 6px; margin-top: 24px; }
+    .page-btn { 
+      padding: 10px 16px; 
+      border: 1px solid var(--border); 
+      border-radius: 8px; 
+      cursor: pointer; 
+      background: white;
+      font-weight: 500;
+      transition: all 0.15s ease-out;
+    }
+    .page-btn:hover { background: var(--bg); border-color: var(--primary); }
+    .page-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+    
+    /* Pre */
+    pre { 
+      white-space: pre-wrap; 
+      word-wrap: break-word; 
+      background: var(--bg); 
+      padding: 20px; 
+      border-radius: 10px;
+      font-size: 14px;
+      line-height: 1.7;
+      border: 1px solid var(--border);
+    }
+    
+    /* Logo */
+    .logo { display: flex; align-items: center; gap: 12px; }
+    .logo-icon { 
+      width: 48px; 
+      height: 48px; 
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+    
+    /* Divider */
+    .divider { border: none; border-top: 1px solid var(--border); margin: 28px 0; }
+    
+    /* Empty State */
+    .empty-state { 
+      text-align: center; 
+      padding: 40px 20px; 
+      color: var(--text-muted);
+    }
+    .empty-state-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+    
+    /* Status */
+    .status-active { color: var(--success); }
+    .status-disabled { color: var(--danger); }
+    
+    /* Responsive */
+    @media (max-width: 640px) {
+      .container { padding: 16px 12px; }
+      .card { padding: 20px 16px; }
+      .header { flex-direction: column; align-items: flex-start; }
+      .header-actions { width: 100%; justify-content: flex-start; }
+      .btn { padding: 10px 16px; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .table { font-size: 13px; }
+      .table th, .table td { padding: 10px 8px; }
+    }
+    
+    /* Reduced Motion */
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; }
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <!-- 登录/注册区域 -->
     <div id="auth-section" class="card">
-      <h1>📧 临时邮箱</h1>
-      <p style="color:#666;margin-bottom:20px;">安全、私密的临时邮箱服务</p>
+      <div class="logo">
+        <div class="logo-icon">📧</div>
+        <div>
+          <h1>临时邮箱</h1>
+          <p class="subtitle" style="margin-bottom:0;">安全、私密的临时邮件服务</p>
+        </div>
+      </div>
+      <hr class="divider">
       <div id="login-form">
-        <input type="text" id="username" placeholder="用户名" onkeypress="if(event.key==='Enter')handleLogin()">
-        <input type="password" id="password" placeholder="密码" onkeypress="if(event.key==='Enter')handleLogin()">
-        <div id="auth-error" class="error hidden"></div>
-        <button class="btn btn-primary" onclick="handleLogin()">登录</button>
-        <button class="btn btn-secondary" onclick="showRegister()">注册</button>
+        <input type="text" id="username" placeholder="用户名 (至少6位)" onkeypress="if(event.key==='Enter')handleLogin()" autocomplete="username">
+        <input type="password" id="password" placeholder="密码 (至少6位)" onkeypress="if(event.key==='Enter')handleLogin()" autocomplete="current-password">
+        <div id="auth-error" class="error hidden" role="alert"></div>
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <button class="btn btn-primary" onclick="handleLogin()">登录</button>
+          <button class="btn btn-secondary" onclick="showRegister()">注册账号</button>
+        </div>
       </div>
       <div id="register-form" class="hidden">
-        <input type="text" id="reg-username" placeholder="用户名 (3-20字符，字母数字下划线)">
-        <input type="password" id="reg-password" placeholder="密码 (至少8位，含字母和数字)">
-        <div id="reg-error" class="error hidden"></div>
-        <button class="btn btn-primary" onclick="handleRegister()">注册</button>
-        <button class="btn btn-secondary" onclick="showLogin()">返回登录</button>
+        <input type="text" id="reg-username" placeholder="用户名 (至少6位)" autocomplete="username">
+        <input type="password" id="reg-password" placeholder="密码 (至少6位)" autocomplete="new-password">
+        <div id="reg-error" class="error hidden" role="alert"></div>
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <button class="btn btn-cta" onclick="handleRegister()">立即注册</button>
+          <button class="btn btn-ghost" onclick="showLogin()">返回登录</button>
+        </div>
       </div>
     </div>
 
@@ -91,16 +327,19 @@ let FRONTEND_HTML = `<!DOCTYPE html>
     <div id="user-section" class="hidden">
       <div class="card">
         <div class="header">
-          <h1>📬 我的邮箱</h1>
-          <div>
-            <span id="user-badge" class="user-badge"></span>
+          <div class="logo">
+            <div class="logo-icon">📬</div>
+            <h1>我的邮箱</h1>
+          </div>
+          <div class="header-actions">
+            <span id="user-badge" class="badge user-badge"></span>
             <span id="admin-link" class="hidden"><button class="btn btn-sm btn-secondary" onclick="showAdmin()">管理后台</button></span>
-            <button class="btn btn-sm btn-secondary" onclick="showSettings()">设置</button>
+            <button class="btn btn-sm btn-ghost" onclick="showSettings()">设置</button>
             <button class="btn btn-sm btn-danger" onclick="handleLogout()">退出</button>
           </div>
         </div>
-        <button class="btn btn-primary" onclick="createNewMailbox()">+ 创建新邮箱</button>
-        <div id="mailbox-list" style="margin-top:16px;"></div>
+        <button class="btn btn-cta" onclick="createNewMailbox()">+ 创建新邮箱</button>
+        <div id="mailbox-list" style="margin-top:20px;"></div>
       </div>
       <div id="email-section" class="card hidden">
         <div class="header">
@@ -110,8 +349,8 @@ let FRONTEND_HTML = `<!DOCTYPE html>
         <div id="email-list"></div>
       </div>
       <div id="email-detail" class="card hidden">
-        <button class="btn btn-secondary" onclick="backToList()">← 返回列表</button>
-        <div id="email-content" style="margin-top:16px;"></div>
+        <button class="btn btn-ghost" onclick="backToList()">← 返回列表</button>
+        <div id="email-content" style="margin-top:20px;"></div>
       </div>
     </div>
 
@@ -119,30 +358,33 @@ let FRONTEND_HTML = `<!DOCTYPE html>
     <div id="settings-section" class="hidden">
       <div class="card">
         <div class="header">
-          <h1>⚙️ 账户设置</h1>
+          <div class="logo">
+            <div class="logo-icon">⚙️</div>
+            <h1>账户设置</h1>
+          </div>
           <button class="btn btn-sm btn-secondary" onclick="hideSettings()">返回</button>
         </div>
         
         <!-- 修改用户名 -->
-        <div style="margin-bottom:24px;">
+        <div style="margin-bottom:28px;">
           <h2>修改用户名</h2>
-          <p style="color:#666;margin-bottom:12px;">当前用户名: <strong id="current-username"></strong></p>
+          <p style="color:var(--text-muted);margin-bottom:16px;">当前用户名: <strong id="current-username"></strong></p>
           <input type="text" id="new-username" placeholder="新用户名 (至少6位)">
-          <div id="username-error" class="error hidden"></div>
-          <div id="username-success" class="success hidden"></div>
+          <div id="username-error" class="error hidden" role="alert"></div>
+          <div id="username-success" class="success hidden" role="status"></div>
           <button class="btn btn-primary" onclick="handleUpdateUsername()">修改用户名</button>
         </div>
         
-        <hr style="margin:24px 0;border:none;border-top:1px solid #eee;">
+        <hr class="divider">
         
         <!-- 修改密码 -->
         <div>
           <h2>修改密码</h2>
-          <input type="password" id="current-password" placeholder="当前密码">
-          <input type="password" id="new-password" placeholder="新密码 (至少6位)">
-          <input type="password" id="confirm-password" placeholder="确认新密码">
-          <div id="password-error" class="error hidden"></div>
-          <div id="password-success" class="success hidden"></div>
+          <input type="password" id="current-password" placeholder="当前密码" autocomplete="current-password">
+          <input type="password" id="new-password" placeholder="新密码 (至少6位)" autocomplete="new-password">
+          <input type="password" id="confirm-password" placeholder="确认新密码" autocomplete="new-password">
+          <div id="password-error" class="error hidden" role="alert"></div>
+          <div id="password-success" class="success hidden" role="status"></div>
           <button class="btn btn-primary" onclick="handleUpdatePassword()">修改密码</button>
         </div>
       </div>
@@ -152,8 +394,11 @@ let FRONTEND_HTML = `<!DOCTYPE html>
     <div id="admin-section" class="hidden">
       <div class="card">
         <div class="header">
-          <h1>⚙️ 管理后台</h1>
-          <div>
+          <div class="logo">
+            <div class="logo-icon">🛠️</div>
+            <h1>管理后台</h1>
+          </div>
+          <div class="header-actions">
             <button class="btn btn-sm btn-secondary" onclick="showUserSection()">返回用户中心</button>
             <button class="btn btn-sm btn-danger" onclick="handleLogout()">退出</button>
           </div>
@@ -225,8 +470,10 @@ let FRONTEND_HTML = `<!DOCTYPE html>
           currentUser = data.data;
           document.getElementById('user-badge').textContent = currentUser.username;
           if (currentUser.role === 'admin') {
-            document.getElementById('user-badge').className = 'admin-badge';
+            document.getElementById('user-badge').className = 'badge admin-badge';
             document.getElementById('admin-link').classList.remove('hidden');
+          } else {
+            document.getElementById('user-badge').className = 'badge user-badge';
           }
           document.getElementById('auth-section').classList.add('hidden');
           document.getElementById('user-section').classList.remove('hidden');
@@ -241,7 +488,10 @@ let FRONTEND_HTML = `<!DOCTYPE html>
         const data = await res.json();
         if (data.success) {
           const list = document.getElementById('mailbox-list');
-          if (data.data.length === 0) { list.innerHTML = '<p style="color:#666;padding:20px 0;">暂无邮箱，点击上方按钮创建一个</p>'; return; }
+          if (data.data.length === 0) { 
+            list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><p>暂无邮箱，点击上方按钮创建一个</p></div>'; 
+            return; 
+          }
           list.innerHTML = data.data.map(m => '<div class="mailbox-item"><span class="mailbox-address" onclick="selectMailbox(\\'' + m.address + '\\')">' + m.address + '</span><button class="btn btn-sm btn-danger" onclick="deleteMailboxItem(\\'' + m.id + '\\')">删除</button></div>').join('');
         }
       } catch(e) { console.error(e); }
@@ -281,8 +531,11 @@ let FRONTEND_HTML = `<!DOCTYPE html>
         const data = await res.json();
         if (data.success) {
           const list = document.getElementById('email-list');
-          if (data.data.length === 0) { list.innerHTML = '<p style="color:#666;padding:20px 0;">暂无邮件，等待接收中...</p>'; return; }
-          list.innerHTML = '<ul class="email-list">' + data.data.map(e => '<li class="email-item" onclick="viewEmail(\\'' + e.id + '\\')"><strong>' + escapeHtml(e.subject || '(无主题)') + '</strong><br><small style="color:#666;">来自: ' + escapeHtml(e.from) + ' | ' + formatDate(e.receivedAt) + '</small></li>').join('') + '</ul>';
+          if (data.data.length === 0) { 
+            list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><p>暂无邮件，等待接收中...</p></div>'; 
+            return; 
+          }
+          list.innerHTML = '<ul class="email-list">' + data.data.map(e => '<li class="email-item" onclick="viewEmail(\\'' + e.id + '\\')"><div class="email-subject">' + escapeHtml(e.subject || '(无主题)') + '</div><div class="email-meta">来自: ' + escapeHtml(e.from) + ' · ' + formatDate(e.receivedAt) + '</div></li>').join('') + '</ul>';
         }
       } catch(e) { console.error(e); }
     }
@@ -295,7 +548,7 @@ let FRONTEND_HTML = `<!DOCTYPE html>
           document.getElementById('email-list').classList.add('hidden');
           document.getElementById('email-detail').classList.remove('hidden');
           const e = data.data;
-          document.getElementById('email-content').innerHTML = '<h2>' + escapeHtml(e.subject || '(无主题)') + '</h2><p><strong>来自:</strong> ' + escapeHtml(e.from) + '</p><p><strong>收件:</strong> ' + escapeHtml(e.to) + '</p><p><strong>时间:</strong> ' + formatDate(e.receivedAt) + '</p><hr style="margin:16px 0;"><pre>' + escapeHtml(e.body || '(无内容)') + '</pre>';
+          document.getElementById('email-content').innerHTML = '<h2 style="margin-bottom:16px;">' + escapeHtml(e.subject || '(无主题)') + '</h2><p style="color:var(--text-muted);margin-bottom:8px;"><strong>来自:</strong> ' + escapeHtml(e.from) + '</p><p style="color:var(--text-muted);margin-bottom:8px;"><strong>收件:</strong> ' + escapeHtml(e.to) + '</p><p style="color:var(--text-muted);margin-bottom:20px;"><strong>时间:</strong> ' + formatDate(e.receivedAt) + '</p><hr class="divider"><pre>' + escapeHtml(e.body || '(无内容)') + '</pre>';
         }
       } catch(e) { console.error(e); }
     }
@@ -349,7 +602,7 @@ let FRONTEND_HTML = `<!DOCTYPE html>
           d.items.forEach(u => {
             const statusBtn = u.status === 'active' ? '<button class="btn btn-sm btn-secondary" onclick="toggleUserStatus(\\'' + u.id + '\\', \\'disabled\\')">禁用</button>' : '<button class="btn btn-sm btn-success" onclick="toggleUserStatus(\\'' + u.id + '\\', \\'active\\')">启用</button>';
             const deleteBtn = u.role !== 'admin' ? '<button class="btn btn-sm btn-danger" onclick="deleteUserItem(\\'' + u.id + '\\')">删除</button>' : '';
-            html += '<tr><td>' + escapeHtml(u.username) + '</td><td>' + (u.role === 'admin' ? '<span class="admin-badge">管理员</span>' : '用户') + '</td><td>' + (u.status === 'active' ? '<span style="color:#28a745;">正常</span>' : '<span style="color:#dc3545;">已禁用</span>') + '</td><td>' + formatDate(u.created_at) + '</td><td>' + statusBtn + ' ' + deleteBtn + '</td></tr>';
+            html += '<tr><td>' + escapeHtml(u.username) + '</td><td>' + (u.role === 'admin' ? '<span class="badge admin-badge">管理员</span>' : '<span style="color:var(--text-muted);">用户</span>') + '</td><td>' + (u.status === 'active' ? '<span class="status-active">● 正常</span>' : '<span class="status-disabled">● 已禁用</span>') + '</td><td>' + formatDate(u.created_at) + '</td><td style="white-space:nowrap;">' + statusBtn + ' ' + deleteBtn + '</td></tr>';
           });
           html += '</tbody></table>';
           html += renderPagination(d, 'loadAdminUsers');
@@ -367,7 +620,7 @@ let FRONTEND_HTML = `<!DOCTYPE html>
           const d = data.data;
           let html = '<table class="table"><thead><tr><th>邮箱地址</th><th>所有者</th><th>创建时间</th><th>过期时间</th><th>操作</th></tr></thead><tbody>';
           d.items.forEach(m => {
-            html += '<tr><td><code>' + escapeHtml(m.address) + '</code></td><td>' + escapeHtml(m.owner_username || '无') + '</td><td>' + formatDate(m.created_at) + '</td><td>' + formatDate(m.expires_at) + '</td><td><button class="btn btn-sm btn-danger" onclick="deleteAdminMailbox(\\'' + m.id + '\\')">删除</button></td></tr>';
+            html += '<tr><td><code>' + escapeHtml(m.address) + '</code></td><td>' + escapeHtml(m.owner_username || '-') + '</td><td>' + formatDate(m.created_at) + '</td><td>' + formatDate(m.expires_at) + '</td><td><button class="btn btn-sm btn-danger" onclick="deleteAdminMailbox(\\'' + m.id + '\\')">删除</button></td></tr>';
           });
           html += '</tbody></table>';
           html += renderPagination(d, 'loadAdminMailboxes');
