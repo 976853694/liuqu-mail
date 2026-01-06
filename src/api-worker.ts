@@ -972,7 +972,6 @@ let FRONTEND_HTML = `<!DOCTYPE html>
         } else { showError('username-error', data.error.message); }
       } catch(e) { showError('username-error', '修改失败，请重试'); }
     }
-    }
 
     async function handleUpdatePassword() {
       hideError('password-error');
