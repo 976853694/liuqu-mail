@@ -1,174 +1,149 @@
-# 临时邮箱系统 (Temp Email System)
+# 📧 临时邮箱 (Temp Mail)
 
-基于 Cloudflare Workers 的临时邮箱系统，支持随机生成邮箱地址、接收邮件、自动过期清理。
+基于 Cloudflare Workers 的免费临时邮箱系统，一键部署，无需服务器。
 
-## 功能特性
+[![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/976853694/liuqu-mail)
+
+## ✨ 功能特性
 
 - 🎲 随机生成临时邮箱地址
-- 📬 接收并存储邮件（纯文本）
-- 🔐 访问令牌认证
-- ⏰ 可配置的邮件保留时长
+- 📬 实时接收邮件
+- 🔐 访问令牌认证，保护隐私
+- ⏰ 可配置邮件保留时长
 - 🧹 自动清理过期数据
-- 🌐 REST API + Web 界面
-- 🚀 全球边缘部署
+- 📱 响应式设计，支持手机访问
+- 🆓 完全免费，基于 Cloudflare 免费套餐
 
-## 技术栈
+## 🚀 一键部署
 
-- Cloudflare Workers (运行时)
-- Cloudflare D1 (数据库)
-- Cloudflare Email Routing (邮件接收)
-- postal-mime (邮件解析)
+### 前置要求
 
-## 部署方式
+- 一个 [Cloudflare 账号](https://dash.cloudflare.com/sign-up)
+- 一个已添加到 Cloudflare 的域名（用于接收邮件）
 
-### 方式一：Cloudflare Dashboard 可视化部署
+### 部署步骤
 
-#### 步骤 1：创建 D1 数据库
+#### 第一步：Fork 仓库
+
+点击右上角 **Fork** 按钮，将仓库复制到你的 GitHub 账号。
+
+#### 第二步：创建 D1 数据库
 
 1. 登录 [Cloudflare Dashboard](https://dash.cloudflare.com)
 2. 左侧菜单选择 **Workers & Pages** → **D1 SQL Database**
 3. 点击 **Create database**
-4. 输入数据库名称：`temp-email-db`
+4. 数据库名称填写：`temp-email-db`
 5. 点击 **Create**
-6. 记录下 **Database ID**（后面需要用到）
+6. 📝 **记录下 Database ID**（页面上会显示）
 
-#### 步骤 2：初始化数据库表
+#### 第三步：初始化数据库
 
-1. 进入刚创建的数据库
+1. 进入刚创建的数据库页面
 2. 点击 **Console** 标签
-3. 复制 `schema.sql` 文件的内容，粘贴到控制台
+3. 复制以下 SQL 并粘贴到控制台：
+
+```sql
+CREATE TABLE IF NOT EXISTS mailboxes (
+  id TEXT PRIMARY KEY,
+  address TEXT UNIQUE NOT NULL,
+  token TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  expires_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_mailboxes_address ON mailboxes(address);
+CREATE INDEX IF NOT EXISTS idx_mailboxes_expires_at ON mailboxes(expires_at);
+CREATE INDEX IF NOT EXISTS idx_mailboxes_token ON mailboxes(token);
+
+CREATE TABLE IF NOT EXISTS emails (
+  id TEXT PRIMARY KEY,
+  mailbox_id TEXT NOT NULL,
+  from_address TEXT NOT NULL,
+  to_address TEXT NOT NULL,
+  subject TEXT,
+  body TEXT,
+  received_at TEXT NOT NULL,
+  FOREIGN KEY (mailbox_id) REFERENCES mailboxes(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_emails_mailbox_id ON emails(mailbox_id);
+CREATE INDEX IF NOT EXISTS idx_emails_received_at ON emails(received_at);
+```
+
 4. 点击 **Execute** 执行
 
-#### 步骤 3：创建 Worker
+#### 第四步：创建 Cloudflare API Token
 
-1. 左侧菜单选择 **Workers & Pages**
-2. 点击 **Create**
-3. 选择 **Create Worker**
-4. 输入 Worker 名称：`temp-email-system`
-5. 点击 **Deploy**（先部署一个空的）
+1. 进入 [Cloudflare API Tokens](https://dash.cloudflare.com/profile/api-tokens)
+2. 点击 **Create Token**
+3. 选择 **Edit Cloudflare Workers** 模板
+4. 点击 **Continue to summary** → **Create Token**
+5. 📝 **复制并保存 Token**（只显示一次！）
 
-#### 步骤 4：上传代码
+#### 第五步：配置 GitHub Secrets
 
-1. 进入刚创建的 Worker
-2. 点击 **Edit code** 进入在线编辑器
-3. 由于 Dashboard 不支持多文件 TypeScript，建议使用命令行部署代码：
-   ```bash
-   npm install
-   npx wrangler deploy
+1. 进入你 Fork 的仓库
+2. 点击 **Settings** → **Secrets and variables** → **Actions**
+3. 点击 **New repository secret**，添加以下 Secrets：
+
+| Name | Value | 说明 |
+|------|-------|------|
+| `CLOUDFLARE_API_TOKEN` | 你的 API Token | 第四步创建的 Token |
+| `CLOUDFLARE_ACCOUNT_ID` | 你的 Account ID | Dashboard 右侧栏 → Account ID |
+| `D1_DATABASE_ID` | 数据库 ID | 第二步记录的 Database ID |
+| `EMAIL_DOMAIN` | 你的域名 | 例如 `example.com` |
+
+> 💡 所有敏感信息都通过 Secrets 配置，无需修改代码文件！
+
+#### 第六步：触发部署
+
+配置完 Secrets 后，有两种方式触发部署：
+
+**方式 1**：手动触发
+1. 进入仓库的 **Actions** 标签
+2. 选择 **Deploy to Cloudflare Workers**
+3. 点击 **Run workflow**
+
+**方式 2**：推送代码触发
+- 对仓库做任意修改并推送，会自动触发部署
+
+#### 第七步：配置 Email Routing
+
+1. 在 Cloudflare Dashboard 选择你的域名
+2. 点击 **Email** → **Email Routing**
+3. 如果未启用，点击 **Enable Email Routing** 并按提示添加 DNS 记录
+4. 点击 **Routing rules** → **Catch-all address**
+5. 选择 **Send to a Worker**
+6. 选择 `temp-email-system`
+7. 点击 **Save**
+
+#### 第八步：部署前端（可选）
+
+前端可以单独部署到 Cloudflare Pages：
+
+1. **Workers & Pages** → **Create** → **Pages** → **Connect to Git**
+2. 选择你 Fork 的仓库
+3. 配置：
+   - **Root directory (advanced)**: `frontend`
+   - **Build command**: 留空
+   - **Build output directory**: 留空
+4. 点击 **Save and Deploy**
+5. 部署完成后，编辑 `frontend/app.js`，将 `API_BASE` 改为你的 Worker URL：
+   ```javascript
+   const API_BASE = 'https://temp-email-system.你的用户名.workers.dev/api';
    ```
 
-#### 步骤 5：绑定 D1 数据库
+### 🎉 完成！
 
-1. 进入 Worker 设置页面
-2. 点击 **Settings** → **Bindings**
-3. 点击 **Add** → **D1 Database**
-4. Variable name 填写：`DB`
-5. 选择之前创建的 `temp-email-db`
-6. 点击 **Save**
-
-#### 步骤 6：配置环境变量
-
-1. 在 Worker 设置页面
-2. 点击 **Settings** → **Variables and Secrets**
-3. 添加以下变量：
-   - `RETENTION_HOURS` = `24`
-   - `RATE_LIMIT_PER_MINUTE` = `60`
-   - `EMAIL_DOMAIN` = `你的域名.com`
-4. 点击 **Save and deploy**
-
-#### 步骤 7：配置 Email Routing
-
-1. 左侧菜单选择你的域名
-2. 点击 **Email** → **Email Routing**
-3. 如果未启用，点击 **Get started** 启用
-4. 点击 **Routing rules** 标签
-5. 点击 **Create address** 或 **Catch-all address**
-6. 选择 **Send to a Worker**
-7. 选择 `temp-email-system` Worker
-8. 点击 **Save**
-
-#### 步骤 8：配置定时任务（Cron Trigger）
-
-1. 进入 Worker 设置页面
-2. 点击 **Settings** → **Triggers**
-3. 在 **Cron Triggers** 部分点击 **Add**
-4. 输入 Cron 表达式：`0 * * * *`（每小时执行一次清理）
-5. 点击 **Save**
-
-#### 步骤 9：部署前端（可选）
-
-前端可以部署到 Cloudflare Pages：
-
-1. 左侧菜单选择 **Workers & Pages**
-2. 点击 **Create** → **Pages**
-3. 选择 **Direct Upload**
-4. 上传 `frontend/` 文件夹中的文件
-5. 设置自定义域名（可选）
+访问你的 Worker URL 或 Pages URL 即可使用临时邮箱。
 
 ---
 
-### 方式二：命令行部署（推荐）
-
-#### 1. 安装依赖
-
-```bash
-npm install
-```
-
-#### 2. 登录 Cloudflare
-
-```bash
-npx wrangler login
-```
-
-#### 3. 创建 D1 数据库
-
-```bash
-npx wrangler d1 create temp-email-db
-```
-
-将返回的 `database_id` 更新到 `wrangler.toml` 中。
-
-#### 4. 初始化数据库
-
-```bash
-npm run db:migrate
-```
-
-#### 5. 配置环境变量
-
-编辑 `wrangler.toml`：
-
-```toml
-[vars]
-RETENTION_HOURS = "24"           # 邮件保留时长（小时）
-RATE_LIMIT_PER_MINUTE = "60"     # 每分钟请求限制
-EMAIL_DOMAIN = "your-domain.com" # 你的邮箱域名
-```
-
-#### 6. 部署
-
-```bash
-npm run deploy
-```
-
-#### 7. 配置 Email Routing
-
-在 Cloudflare Dashboard 中配置（参考上面步骤 7）
-
----
-
-### 本地开发
-
-```bash
-npm run dev
-```
-
-## API 文档
+## 📖 API 文档
 
 ### 创建邮箱
 
-```
+```http
 POST /api/mailbox
 ```
 
@@ -186,25 +161,55 @@ POST /api/mailbox
 
 ### 获取邮件列表
 
-```
+```http
 GET /api/mailbox/{address}/emails
 Authorization: Bearer {token}
 ```
 
 ### 获取邮件详情
 
-```
+```http
 GET /api/mailbox/{address}/emails/{id}
 Authorization: Bearer {token}
 ```
 
-## 前端部署
+---
 
-前端文件位于 `frontend/` 目录，可以：
+## ⚙️ 配置说明
 
-1. 部署到 Cloudflare Pages
-2. 或配置 Worker 提供静态文件服务
+在 `wrangler.toml` 中可以修改以下配置：
 
-## 许可证
+| 变量 | 说明 | 默认值 |
+|------|------|--------|
+| `RETENTION_HOURS` | 邮件保留时长（小时） | 24 |
+| `RATE_LIMIT_PER_MINUTE` | 每分钟请求限制 | 60 |
+| `EMAIL_DOMAIN` | 邮箱域名 | - |
 
-MIT
+---
+
+## 🛠️ 本地开发
+
+```bash
+# 安装依赖
+npm install
+
+# 本地运行
+npm run dev
+
+# 部署
+npm run deploy
+```
+
+---
+
+## 📄 许可证
+
+MIT License
+
+---
+
+## 🙏 致谢
+
+- [Cloudflare Workers](https://workers.cloudflare.com/)
+- [Cloudflare D1](https://developers.cloudflare.com/d1/)
+- [postal-mime](https://github.com/postalsys/postal-mime)

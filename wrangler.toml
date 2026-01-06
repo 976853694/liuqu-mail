@@ -5,12 +5,14 @@ compatibility_date = "2024-11-01"
 [vars]
 RETENTION_HOURS = "24"
 RATE_LIMIT_PER_MINUTE = "60"
-EMAIL_DOMAIN = "tempmail.example.com"
+# EMAIL_DOMAIN 通过 GitHub Secrets 注入，无需手动修改
+EMAIL_DOMAIN = "example.com"
 
 [[d1_databases]]
 binding = "DB"
 database_name = "temp-email-db"
-database_id = "your-database-id-here"
+# database_id 通过 GitHub Secrets 注入，无需手动修改
+database_id = "placeholder"
 
 # Email Worker 配置
 # 需要在 Cloudflare Dashboard 中配置 Email Routing
