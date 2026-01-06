@@ -4,234 +4,305 @@ Base URL: `https://your-worker.workers.dev`
 
 ## 接口列表
 
+### 认证接口
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | `/api/auth/register` | 用户注册 |
+| POST | `/api/auth/login` | 用户登录 |
+| POST | `/api/auth/logout` | 用户登出 |
+
+### 用户接口
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/user/profile` | 获取用户信息 |
+| PUT | `/api/user/password` | 修改密码 |
+| PUT | `/api/user/username` | 修改用户名 |
+
+### 邮箱接口
 | 方法 | 路径 | 说明 |
 |------|------|------|
 | POST | `/api/mailbox` | 创建临时邮箱 |
+| GET | `/api/mailboxes` | 获取我的邮箱列表 |
+| DELETE | `/api/mailbox/{id}` | 删除邮箱 |
 | GET | `/api/mailbox/{address}/emails` | 获取邮件列表 |
 | GET | `/api/mailbox/{address}/emails/{id}` | 获取邮件详情 |
 
+### 管理员接口
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/admin/stats` | 获取系统统计 |
+| GET | `/api/admin/users` | 获取用户列表 |
+| PUT | `/api/admin/users/{id}/status` | 更新用户状态 |
+| DELETE | `/api/admin/users/{id}` | 删除用户 |
+| GET | `/api/admin/mailboxes` | 获取所有邮箱 |
+| DELETE | `/api/admin/mailboxes/{id}` | 删除邮箱 |
+
+### 调试接口
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/debug/init` | 检查环境变量并创建管理员 |
+| POST | `/api/debug/setup-admin` | 手动设置管理员账户 |
+
 ---
 
-## 1. 创建临时邮箱
+## 认证接口
 
-创建一个新的临时邮箱地址。
+### 1. 用户注册
 
-### 请求
+```http
+POST /api/auth/register
+Content-Type: application/json
+
+{
+  "username": "myuser",
+  "password": "mypassword"
+}
+```
+
+**验证规则**：用户名和密码至少6位
+
+**成功响应 (201)**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "username": "myuser",
+    "role": "user",
+    "status": "active",
+    "created_at": "2024-01-01T00:00:00.000Z"
+  }
+}
+```
+
+### 2. 用户登录
+
+```http
+POST /api/auth/login
+Content-Type: application/json
+
+{
+  "username": "myuser",
+  "password": "mypassword"
+}
+```
+
+**成功响应 (200)**
+```json
+{
+  "success": true,
+  "data": {
+    "token": "session-token",
+    "user": {
+      "id": "uuid",
+      "username": "myuser",
+      "role": "user"
+    },
+    "expiresAt": "2024-01-02T00:00:00.000Z"
+  }
+}
+```
+
+### 3. 用户登出
+
+```http
+POST /api/auth/logout
+Authorization: Bearer {token}
+```
+
+**成功响应 (200)**
+```json
+{
+  "success": true
+}
+```
+
+---
+
+## 用户接口
+
+### 4. 获取用户信息
+
+```http
+GET /api/user/profile
+Authorization: Bearer {token}
+```
+
+**成功响应 (200)**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "username": "myuser",
+    "role": "user",
+    "created_at": "2024-01-01T00:00:00.000Z",
+    "mailboxCount": 3
+  }
+}
+```
+
+### 5. 修改密码
+
+```http
+PUT /api/user/password
+Authorization: Bearer {token}
+Content-Type: application/json
+
+{
+  "currentPassword": "oldpassword",
+  "newPassword": "newpassword"
+}
+```
+
+**验证规则**：新密码至少6位
+
+**成功响应 (200)**
+```json
+{
+  "success": true
+}
+```
+
+### 6. 修改用户名
+
+```http
+PUT /api/user/username
+Authorization: Bearer {token}
+Content-Type: application/json
+
+{
+  "newUsername": "newusername"
+}
+```
+
+**验证规则**：新用户名至少6位，且不能与现有用户名重复
+
+**成功响应 (200)**
+```json
+{
+  "success": true
+}
+```
+
+**错误响应 (409)**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "CONFLICT",
+    "message": "用户名已被使用"
+  }
+}
+```
+
+---
+
+## 邮箱接口
+
+### 7. 创建临时邮箱
 
 ```http
 POST /api/mailbox
+Authorization: Bearer {token}
 ```
 
-无需请求体。
-
-### 响应
-
-**成功 (201)**
-
+**成功响应 (201)**
 ```json
 {
   "success": true,
   "data": {
     "address": "abc123xyz@example.com",
-    "token": "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6",
+    "token": "mailbox-token",
     "expiresAt": "2024-01-02T12:00:00.000Z"
   }
 }
 ```
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| `address` | string | 生成的临时邮箱地址 |
-| `token` | string | 访问令牌，用于后续 API 调用认证 |
-| `expiresAt` | string | 邮箱过期时间 (ISO 8601 格式) |
+### 8. 获取我的邮箱列表
 
-**错误 (429)**
+```http
+GET /api/mailboxes
+Authorization: Bearer {token}
+```
 
+**成功响应 (200)**
 ```json
 {
-  "success": false,
-  "error": {
-    "code": "RATE_LIMITED",
-    "message": "Too many requests"
-  }
+  "success": true,
+  "data": [
+    {
+      "id": "uuid",
+      "address": "abc123xyz@example.com",
+      "created_at": "2024-01-01T00:00:00.000Z",
+      "expires_at": "2024-01-02T00:00:00.000Z"
+    }
+  ]
 }
 ```
 
-### 示例
+### 9. 删除邮箱
 
-```bash
-curl -X POST https://your-worker.workers.dev/api/mailbox
+```http
+DELETE /api/mailbox/{id}
+Authorization: Bearer {token}
 ```
 
-```javascript
-const response = await fetch('https://your-worker.workers.dev/api/mailbox', {
-  method: 'POST'
-});
-const result = await response.json();
-console.log(result.data.address); // abc123xyz@example.com
-console.log(result.data.token);   // 保存这个 token 用于后续请求
-```
-
----
-
-## 2. 获取邮件列表
-
-获取指定邮箱收到的所有邮件列表，按接收时间倒序排列。
-
-### 请求
+### 10. 获取邮件列表
 
 ```http
 GET /api/mailbox/{address}/emails
 Authorization: Bearer {token}
 ```
 
-| 参数 | 位置 | 说明 |
-|------|------|------|
-| `address` | URL 路径 | 邮箱地址 (需要 URL 编码) |
-| `token` | Header | 创建邮箱时返回的访问令牌 |
-
-### 响应
-
-**成功 (200)**
-
-```json
-{
-  "success": true,
-  "data": {
-    "emails": [
-      {
-        "id": "550e8400-e29b-41d4-a716-446655440000",
-        "from": "noreply@github.com",
-        "subject": "Please verify your email",
-        "receivedAt": "2024-01-01T10:30:00.000Z"
-      },
-      {
-        "id": "550e8400-e29b-41d4-a716-446655440001",
-        "from": "support@example.com",
-        "subject": "Welcome!",
-        "receivedAt": "2024-01-01T09:00:00.000Z"
-      }
-    ]
-  }
-}
-```
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| `emails` | array | 邮件列表 |
-| `emails[].id` | string | 邮件 ID |
-| `emails[].from` | string | 发件人地址 |
-| `emails[].subject` | string \| null | 邮件主题 |
-| `emails[].receivedAt` | string | 接收时间 (ISO 8601 格式) |
-
-**错误 (401)**
-
-```json
-{
-  "success": false,
-  "error": {
-    "code": "UNAUTHORIZED",
-    "message": "Invalid token or mailbox not found"
-  }
-}
-```
-
-### 示例
-
-```bash
-curl -H "Authorization: Bearer your-token-here" \
-  "https://your-worker.workers.dev/api/mailbox/abc123xyz%40example.com/emails"
-```
-
-```javascript
-const response = await fetch(
-  `https://your-worker.workers.dev/api/mailbox/${encodeURIComponent(address)}/emails`,
-  {
-    headers: {
-      'Authorization': `Bearer ${token}`
-    }
-  }
-);
-const result = await response.json();
-console.log(result.data.emails);
-```
-
----
-
-## 3. 获取邮件详情
-
-获取指定邮件的完整内容。
-
-### 请求
+### 11. 获取邮件详情
 
 ```http
 GET /api/mailbox/{address}/emails/{id}
 Authorization: Bearer {token}
 ```
 
-| 参数 | 位置 | 说明 |
-|------|------|------|
-| `address` | URL 路径 | 邮箱地址 (需要 URL 编码) |
-| `id` | URL 路径 | 邮件 ID |
-| `token` | Header | 创建邮箱时返回的访问令牌 |
+---
 
-### 响应
+## 调试接口
 
-**成功 (200)**
+### 12. 手动设置管理员账户
 
+用于首次部署时手动创建管理员账户。
+
+```http
+POST /api/debug/setup-admin
+Content-Type: application/json
+
+{
+  "username": "admin123",
+  "password": "admin123456"
+}
+```
+
+**验证规则**：用户名和密码至少6位
+
+**成功响应 (201)** - 创建新管理员
 ```json
 {
   "success": true,
   "data": {
-    "id": "550e8400-e29b-41d4-a716-446655440000",
-    "from": "noreply@github.com",
-    "to": "abc123xyz@example.com",
-    "subject": "Please verify your email",
-    "body": "Click the link below to verify your email address:\n\nhttps://github.com/verify?token=xxx",
-    "receivedAt": "2024-01-01T10:30:00.000Z"
+    "message": "管理员创建成功",
+    "username": "admin123",
+    "id": "uuid"
   }
 }
 ```
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| `id` | string | 邮件 ID |
-| `from` | string | 发件人地址 |
-| `to` | string | 收件人地址 |
-| `subject` | string \| null | 邮件主题 |
-| `body` | string \| null | 邮件正文 (纯文本) |
-| `receivedAt` | string | 接收时间 (ISO 8601 格式) |
-
-**错误 (404)**
-
+**成功响应 (200)** - 更新现有管理员密码
 ```json
 {
-  "success": false,
-  "error": {
-    "code": "NOT_FOUND",
-    "message": "Email not found"
+  "success": true,
+  "data": {
+    "message": "管理员密码已更新",
+    "username": "admin123"
   }
 }
-```
-
-### 示例
-
-```bash
-curl -H "Authorization: Bearer your-token-here" \
-  "https://your-worker.workers.dev/api/mailbox/abc123xyz%40example.com/emails/550e8400-e29b-41d4-a716-446655440000"
-```
-
-```javascript
-const response = await fetch(
-  `https://your-worker.workers.dev/api/mailbox/${encodeURIComponent(address)}/emails/${emailId}`,
-  {
-    headers: {
-      'Authorization': `Bearer ${token}`
-    }
-  }
-);
-const result = await response.json();
-console.log(result.data.body);
 ```
 
 ---
@@ -242,27 +313,17 @@ console.log(result.data.body);
 |------------|--------|------|
 | 400 | `BAD_REQUEST` | 请求参数无效 |
 | 401 | `UNAUTHORIZED` | 缺少或无效的访问令牌 |
-| 404 | `NOT_FOUND` | 邮箱或邮件不存在 |
-| 429 | `RATE_LIMITED` | 请求过于频繁，请稍后重试 |
+| 403 | `FORBIDDEN` | 无权限访问 |
+| 404 | `NOT_FOUND` | 资源不存在 |
+| 409 | `CONFLICT` | 资源冲突（如用户名已存在） |
+| 429 | `RATE_LIMITED` | 请求过于频繁 |
 | 500 | `INTERNAL_ERROR` | 服务器内部错误 |
-
----
-
-## 使用流程
-
-```
-1. POST /api/mailbox          → 获取邮箱地址和 token
-2. 使用邮箱地址注册/验证
-3. GET /api/mailbox/{address}/emails  → 轮询获取邮件列表
-4. GET /api/mailbox/{address}/emails/{id}  → 查看邮件详情
-```
 
 ---
 
 ## 注意事项
 
-1. **Token 保密**：访问令牌是访问邮箱的唯一凭证，请妥善保管
-2. **邮箱过期**：邮箱会在 `expiresAt` 时间后自动删除
-3. **速率限制**：默认每分钟 60 次请求
-4. **不支持附件**：系统只保存邮件的纯文本内容
-5. **URL 编码**：邮箱地址中的 `@` 符号需要编码为 `%40`
+1. **认证方式**：除注册和登录外，所有接口都需要 `Authorization: Bearer {token}` 头
+2. **验证规则**：用户名和密码只需6位以上，无复杂要求
+3. **邮箱过期**：邮箱会在过期时间后自动删除
+4. **速率限制**：默认每分钟 60 次请求

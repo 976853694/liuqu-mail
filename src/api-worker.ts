@@ -3,7 +3,7 @@ import { createMailbox, findMailboxesByUserId, countMailboxesByUserId, verifyMai
 import { getEmailsByMailbox, getEmailById, countEmails } from './db/email';
 import { register, login, logout, getAuthConfig, invalidateUserSessions } from './auth/auth-service';
 import { requireAuth, requireAdmin, isAuthContext, extractToken } from './middleware/auth';
-import { findUserById, listUsers, updateUserStatus, deleteUser, countUsers, countActiveUsers, updateUserPassword, toUserPublic, findUserByUsername, createUser } from './db/user';
+import { findUserById, listUsers, updateUserStatus, deleteUser, countUsers, countActiveUsers, updateUserPassword, updateUsername, toUserPublic, findUserByUsername, createUser } from './db/user';
 import { hashPassword, verifyPassword } from './auth/password';
  
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -95,6 +95,7 @@ let FRONTEND_HTML = `<!DOCTYPE html>
           <div>
             <span id="user-badge" class="user-badge"></span>
             <span id="admin-link" class="hidden"><button class="btn btn-sm btn-secondary" onclick="showAdmin()">管理后台</button></span>
+            <button class="btn btn-sm btn-secondary" onclick="showSettings()">设置</button>
             <button class="btn btn-sm btn-danger" onclick="handleLogout()">退出</button>
           </div>
         </div>
@@ -111,6 +112,39 @@ let FRONTEND_HTML = `<!DOCTYPE html>
       <div id="email-detail" class="card hidden">
         <button class="btn btn-secondary" onclick="backToList()">← 返回列表</button>
         <div id="email-content" style="margin-top:16px;"></div>
+      </div>
+    </div>
+
+    <!-- 设置区域 -->
+    <div id="settings-section" class="hidden">
+      <div class="card">
+        <div class="header">
+          <h1>⚙️ 账户设置</h1>
+          <button class="btn btn-sm btn-secondary" onclick="hideSettings()">返回</button>
+        </div>
+        
+        <!-- 修改用户名 -->
+        <div style="margin-bottom:24px;">
+          <h2>修改用户名</h2>
+          <p style="color:#666;margin-bottom:12px;">当前用户名: <strong id="current-username"></strong></p>
+          <input type="text" id="new-username" placeholder="新用户名 (至少6位)">
+          <div id="username-error" class="error hidden"></div>
+          <div id="username-success" class="success hidden"></div>
+          <button class="btn btn-primary" onclick="handleUpdateUsername()">修改用户名</button>
+        </div>
+        
+        <hr style="margin:24px 0;border:none;border-top:1px solid #eee;">
+        
+        <!-- 修改密码 -->
+        <div>
+          <h2>修改密码</h2>
+          <input type="password" id="current-password" placeholder="当前密码">
+          <input type="password" id="new-password" placeholder="新密码 (至少6位)">
+          <input type="password" id="confirm-password" placeholder="确认新密码">
+          <div id="password-error" class="error hidden"></div>
+          <div id="password-success" class="success hidden"></div>
+          <button class="btn btn-primary" onclick="handleUpdatePassword()">修改密码</button>
+        </div>
       </div>
     </div>
 
@@ -180,6 +214,7 @@ let FRONTEND_HTML = `<!DOCTYPE html>
       document.getElementById('auth-section').classList.remove('hidden');
       document.getElementById('user-section').classList.add('hidden');
       document.getElementById('admin-section').classList.add('hidden');
+      document.getElementById('settings-section').classList.add('hidden');
     }
 
     async function loadUserData() {
@@ -386,6 +421,73 @@ let FRONTEND_HTML = `<!DOCTYPE html>
       if (!str) return '';
       try { return new Date(str).toLocaleString('zh-CN'); } catch(e) { return str; }
     }
+
+    // 设置功能
+    function showSettings() {
+      document.getElementById('user-section').classList.add('hidden');
+      document.getElementById('settings-section').classList.remove('hidden');
+      document.getElementById('current-username').textContent = currentUser.username;
+      // 清空输入框
+      document.getElementById('new-username').value = '';
+      document.getElementById('current-password').value = '';
+      document.getElementById('new-password').value = '';
+      document.getElementById('confirm-password').value = '';
+      hideError('username-error'); hideError('password-error');
+      document.getElementById('username-success').classList.add('hidden');
+      document.getElementById('password-success').classList.add('hidden');
+    }
+
+    function hideSettings() {
+      document.getElementById('settings-section').classList.add('hidden');
+      document.getElementById('user-section').classList.remove('hidden');
+    }
+
+    function showSuccess(id, msg) {
+      const el = document.getElementById(id);
+      el.textContent = msg;
+      el.classList.remove('hidden');
+    }
+
+    async function handleUpdateUsername() {
+      hideError('username-error');
+      document.getElementById('username-success').classList.add('hidden');
+      const newUsername = document.getElementById('new-username').value.trim();
+      if (!newUsername) { showError('username-error', '请输入新用户名'); return; }
+      if (newUsername.length < 6) { showError('username-error', '用户名至少6位'); return; }
+      try {
+        const res = await fetch('/api/user/username', { method: 'PUT', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ newUsername }) });
+        const data = await res.json();
+        if (data.success) {
+          showSuccess('username-success', '用户名修改成功！');
+          currentUser.username = newUsername;
+          document.getElementById('user-badge').textContent = newUsername;
+          document.getElementById('current-username').textContent = newUsername;
+          document.getElementById('new-username').value = '';
+        } else { showError('username-error', data.error.message); }
+      } catch(e) { showError('username-error', '修改失败，请重试'); }
+    }
+
+    async function handleUpdatePassword() {
+      hideError('password-error');
+      document.getElementById('password-success').classList.add('hidden');
+      const currentPassword = document.getElementById('current-password').value;
+      const newPassword = document.getElementById('new-password').value;
+      const confirmPassword = document.getElementById('confirm-password').value;
+      if (!currentPassword) { showError('password-error', '请输入当前密码'); return; }
+      if (!newPassword) { showError('password-error', '请输入新密码'); return; }
+      if (newPassword.length < 6) { showError('password-error', '新密码至少6位'); return; }
+      if (newPassword !== confirmPassword) { showError('password-error', '两次输入的新密码不一致'); return; }
+      try {
+        const res = await fetch('/api/user/password', { method: 'PUT', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ currentPassword, newPassword }) });
+        const data = await res.json();
+        if (data.success) {
+          showSuccess('password-success', '密码修改成功！');
+          document.getElementById('current-password').value = '';
+          document.getElementById('new-password').value = '';
+          document.getElementById('confirm-password').value = '';
+        } else { showError('password-error', data.error.message); }
+      } catch(e) { showError('password-error', '修改失败，请重试'); }
+    }
   </script>
 </body>
 </html>`;
@@ -484,6 +586,9 @@ export async function handleApiRequest(
     if (path === '/api/user/password' && request.method === 'PUT') {
       return corsResponse(await handleUpdatePassword(request, env));
     }
+    if (path === '/api/user/username' && request.method === 'PUT') {
+      return corsResponse(await handleUpdateUsername(request, env));
+    }
 
     // 邮箱路由
     if (path === '/api/mailbox' && request.method === 'POST') {
@@ -550,6 +655,11 @@ export async function handleApiRequest(
     // 调试接口 - 检查环境变量和手动创建管理员
     if (path === '/api/debug/init') {
       return corsResponse(await handleDebugInit(env));
+    }
+
+    // 调试接口 - 直接设置管理员账户（用于首次部署）
+    if (path === '/api/debug/setup-admin' && request.method === 'POST') {
+      return corsResponse(await handleDebugSetupAdmin(request, env));
     }
 
     // 404
@@ -690,6 +800,43 @@ async function handleUpdatePassword(request: Request, env: Env): Promise<Respons
   // 更新密码
   const newPasswordHash = await hashPassword(newPassword);
   await updateUserPassword(env.DB, authResult.user.id, newPasswordHash);
+
+  return jsonResponse<ApiResponse>({ success: true });
+}
+
+async function handleUpdateUsername(request: Request, env: Env): Promise<Response> {
+  const authResult = await requireAuth(request, env);
+  if (!isAuthContext(authResult)) return authResult;
+
+  const body = await request.json() as { newUsername?: string };
+  const { newUsername } = body;
+
+  if (!newUsername) {
+    return jsonResponse<ApiResponse>({
+      success: false,
+      error: { code: 'BAD_REQUEST', message: '新用户名不能为空' }
+    }, 400);
+  }
+
+  // 简单验证：6位以上
+  if (newUsername.length < 6) {
+    return jsonResponse<ApiResponse>({
+      success: false,
+      error: { code: 'BAD_REQUEST', message: '用户名至少6位' }
+    }, 400);
+  }
+
+  // 检查用户名是否已存在
+  const existingUser = await findUserByUsername(env.DB, newUsername);
+  if (existingUser) {
+    return jsonResponse<ApiResponse>({
+      success: false,
+      error: { code: 'CONFLICT', message: '用户名已被使用' }
+    }, 409);
+  }
+
+  // 更新用户名
+  await updateUsername(env.DB, authResult.user.id, newUsername);
 
   return jsonResponse<ApiResponse>({ success: true });
 }
@@ -982,15 +1129,22 @@ async function handleDebugInit(env: Env): Promise<Response> {
   const adminUsername = env.ADMIN_USERNAME;
   const adminPassword = env.ADMIN_PASSWORD;
 
+  // 显示环境变量状态（脱敏）
+  const debugInfo = {
+    ADMIN_USERNAME: adminUsername || '(未设置)',
+    ADMIN_PASSWORD: adminPassword ? `${adminPassword.substring(0, 2)}***${adminPassword.substring(adminPassword.length - 2)} (${adminPassword.length}位)` : '(未设置)',
+  };
+
   // 检查环境变量
   if (!adminUsername || !adminPassword) {
     return jsonResponse<ApiResponse>({
       success: false,
       error: { 
         code: 'BAD_REQUEST', 
-        message: `环境变量未配置: ADMIN_USERNAME=${adminUsername ? '已设置' : '未设置'}, ADMIN_PASSWORD=${adminPassword ? '已设置' : '未设置'}` 
-      }
-    }, 400);
+        message: `环境变量未配置`,
+      },
+      data: debugInfo
+    } as ApiResponse, 400);
   }
 
   try {
@@ -999,7 +1153,7 @@ async function handleDebugInit(env: Env): Promise<Response> {
     if (existingAdmin) {
       return jsonResponse<ApiResponse>({
         success: true,
-        data: { message: '管理员已存在', username: adminUsername }
+        data: { message: '管理员已存在', username: adminUsername, env: debugInfo }
       });
     }
 
@@ -1013,12 +1167,81 @@ async function handleDebugInit(env: Env): Promise<Response> {
 
     return jsonResponse<ApiResponse>({
       success: true,
+      data: { message: '管理员创建成功', username: admin.username, id: admin.id, env: debugInfo }
+    }, 201);
+  } catch (error) {
+    return jsonResponse<ApiResponse>({
+      success: false,
+      error: { code: 'INTERNAL_ERROR', message: `创建失败: ${error instanceof Error ? error.message : String(error)}` },
+      data: debugInfo
+    } as ApiResponse, 500);
+  }
+}
+
+async function handleDebugSetupAdmin(request: Request, env: Env): Promise<Response> {
+  const body = await request.json() as { username?: string; password?: string };
+  const { username, password } = body;
+
+  // 验证输入
+  if (!username || !password) {
+    return jsonResponse<ApiResponse>({
+      success: false,
+      error: { code: 'BAD_REQUEST', message: '用户名和密码不能为空' }
+    }, 400);
+  }
+
+  // 简单验证：6位以上
+  if (username.length < 6) {
+    return jsonResponse<ApiResponse>({
+      success: false,
+      error: { code: 'BAD_REQUEST', message: '用户名至少6位' }
+    }, 400);
+  }
+
+  if (password.length < 6) {
+    return jsonResponse<ApiResponse>({
+      success: false,
+      error: { code: 'BAD_REQUEST', message: '密码至少6位' }
+    }, 400);
+  }
+
+  try {
+    // 检查是否已有管理员
+    const existingAdmin = await findUserByUsername(env.DB, username);
+    
+    if (existingAdmin) {
+      // 如果用户名已存在且是管理员，更新密码
+      if (existingAdmin.role === 'admin') {
+        const passwordHash = await hashPassword(password);
+        await updateUserPassword(env.DB, existingAdmin.id, passwordHash);
+        return jsonResponse<ApiResponse>({
+          success: true,
+          data: { message: '管理员密码已更新', username }
+        });
+      } else {
+        return jsonResponse<ApiResponse>({
+          success: false,
+          error: { code: 'CONFLICT', message: '该用户名已被普通用户使用' }
+        }, 409);
+      }
+    }
+
+    // 创建新管理员
+    const passwordHash = await hashPassword(password);
+    const admin = await createUser(env.DB, {
+      username,
+      passwordHash,
+      role: 'admin',
+    });
+
+    return jsonResponse<ApiResponse>({
+      success: true,
       data: { message: '管理员创建成功', username: admin.username, id: admin.id }
     }, 201);
   } catch (error) {
     return jsonResponse<ApiResponse>({
       success: false,
-      error: { code: 'INTERNAL_ERROR', message: `创建失败: ${error instanceof Error ? error.message : String(error)}` }
+      error: { code: 'INTERNAL_ERROR', message: `操作失败: ${error instanceof Error ? error.message : String(error)}` }
     }, 500);
   }
 }

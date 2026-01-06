@@ -100,6 +100,20 @@ export async function updateUserPassword(
 }
 
 /**
+ * 更新用户名
+ */
+export async function updateUsername(
+  db: D1Database,
+  id: string,
+  username: string
+): Promise<void> {
+  await db
+    .prepare('UPDATE users SET username = ? WHERE id = ?')
+    .bind(username, id)
+    .run();
+}
+
+/**
  * 删除用户
  */
 export async function deleteUser(db: D1Database, id: string): Promise<void> {
