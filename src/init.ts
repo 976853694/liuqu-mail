@@ -3,25 +3,9 @@ import { findUserByUsername, createUser } from './db/user';
 import { hashPassword } from './auth/password';
 
 /**
- * 检查数据库表是否存在
- */
-async function checkTablesExist(db: D1Database): Promise<boolean> {
-  try {
-    const result = await db.prepare(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name='users'"
-    ).first();
-    return result !== null;
-  } catch {
-    return false;
-  }
-}
-
-/**
  * 初始化数据库表结构
  */
 async function initializeDatabase(db: D1Database): Promise<void> {
-  console.log('Starting database initialization...');
-  
   // 创建用户表
   await db.exec(`
     CREATE TABLE IF NOT EXISTS users (
@@ -33,7 +17,6 @@ async function initializeDatabase(db: D1Database): Promise<void> {
       created_at TEXT NOT NULL
     )
   `);
-  console.log('Users table created');
 
   // 创建会话表
   await db.exec(`
@@ -46,7 +29,6 @@ async function initializeDatabase(db: D1Database): Promise<void> {
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )
   `);
-  console.log('Sessions table created');
 
   // 创建邮箱表
   await db.exec(`
@@ -59,7 +41,6 @@ async function initializeDatabase(db: D1Database): Promise<void> {
       expires_at TEXT NOT NULL
     )
   `);
-  console.log('Mailboxes table created');
 
   // 创建邮件表
   await db.exec(`
@@ -74,7 +55,6 @@ async function initializeDatabase(db: D1Database): Promise<void> {
       FOREIGN KEY (mailbox_id) REFERENCES mailboxes(id) ON DELETE CASCADE
     )
   `);
-  console.log('Emails table created');
 
   // 创建索引
   const indexes = [
@@ -88,11 +68,10 @@ async function initializeDatabase(db: D1Database): Promise<void> {
   for (const sql of indexes) {
     try {
       await db.exec(sql);
-    } catch (e) {
-      console.log('Index creation skipped:', sql);
+    } catch {
+      // 忽略索引创建错误
     }
   }
-  console.log('Database initialization completed');
 }
 
 /**
@@ -103,14 +82,12 @@ async function initializeAdminUser(env: Env): Promise<void> {
   const adminPassword = env.ADMIN_PASSWORD;
 
   if (!adminUsername || !adminPassword) {
-    console.log('Admin credentials not configured, skipping admin creation');
     return;
   }
 
   try {
     const existingAdmin = await findUserByUsername(env.DB, adminUsername);
     if (existingAdmin) {
-      console.log('Admin user already exists');
       return;
     }
 
@@ -120,14 +97,12 @@ async function initializeAdminUser(env: Env): Promise<void> {
       passwordHash,
       role: 'admin',
     });
-    console.log(`Admin user "${adminUsername}" created successfully`);
   } catch (error) {
+    // 忽略并发创建导致的冲突
     if (error instanceof Error && error.message.includes('UNIQUE constraint failed')) {
-      console.log('Admin user already exists (concurrent creation)');
       return;
     }
     console.error('Failed to initialize admin:', error);
-    throw error;
   }
 }
 
@@ -136,20 +111,10 @@ async function initializeAdminUser(env: Env): Promise<void> {
  */
 export async function initializeAdmin(env: Env): Promise<void> {
   try {
-    // 检查表是否已存在
-    const tablesExist = await checkTablesExist(env.DB);
-    
-    if (!tablesExist) {
-      console.log('Tables do not exist, initializing database...');
-      await initializeDatabase(env.DB);
-    } else {
-      console.log('Tables already exist, skipping database initialization');
-    }
-    
-    // 始终尝试创建管理员（如果不存在）
+    await initializeDatabase(env.DB);
     await initializeAdminUser(env);
   } catch (error) {
     console.error('Initialization error:', error);
-    throw error; // 重新抛出错误，让调用者知道初始化失败
+    // 不抛出错误，让应用继续运行
   }
 }
