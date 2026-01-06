@@ -52,6 +52,7 @@ let FRONTEND_HTML = `<!DOCTYPE html>
       flex-direction: column;
       justify-content: center;
     }
+    .auth-container.hidden { display: none !important; }
     
     /* App Layout - 侧边栏布局 */
     .app-layout {
@@ -252,7 +253,7 @@ let FRONTEND_HTML = `<!DOCTYPE html>
     }
     input::placeholder { color: #94A3B8; }
     
-    .hidden { display: none; }
+    .hidden { display: none !important; }
     
     /* Email List */
     .email-list { list-style: none; }
@@ -765,7 +766,7 @@ let FRONTEND_HTML = `<!DOCTYPE html>
           }
           list.innerHTML = data.data.map(m => {
             const isActive = currentMailbox === m.address ? ' active' : '';
-            return '<div class="mailbox-list-item' + isActive + '" onclick="selectMailbox(\\'' + m.address + '\\', \\'' + m.id + '\\')"><span class="mailbox-address">' + m.address + '</span><button class="btn btn-sm btn-danger" onclick="event.stopPropagation();deleteMailboxItem(\\'' + m.id + '\\')">删除</button></div>';
+            return '<div class="mailbox-list-item' + isActive + '" onclick="selectMailbox(\\'' + m.address + '\\', \\'' + m.id + '\\', event)"><span class="mailbox-address">' + m.address + '</span><button class="btn btn-sm btn-danger" onclick="event.stopPropagation();deleteMailboxItem(\\'' + m.id + '\\')">删除</button></div>';
           }).join('');
         }
       } catch(e) { console.error(e); }
@@ -794,7 +795,7 @@ let FRONTEND_HTML = `<!DOCTYPE html>
       } catch(e) { alert('删除失败'); }
     }
 
-    async function selectMailbox(address, id) {
+    async function selectMailbox(address, id, evt) {
       currentMailbox = address;
       currentMailboxId = id;
       document.getElementById('current-mailbox').textContent = address;
@@ -802,7 +803,7 @@ let FRONTEND_HTML = `<!DOCTYPE html>
       document.getElementById('email-list').classList.remove('hidden');
       // 更新选中状态
       document.querySelectorAll('.mailbox-list-item').forEach(item => item.classList.remove('active'));
-      event.currentTarget.classList.add('active');
+      if (evt && evt.currentTarget) evt.currentTarget.classList.add('active');
       refreshEmails();
     }
 
