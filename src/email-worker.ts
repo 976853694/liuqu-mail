@@ -7,9 +7,9 @@ import { createEmail } from './db/email';
  * 处理入站邮件
  */
 export async function handleEmailMessage(
-  message: EmailMessage,
+  message: ForwardableEmailMessage,
   env: Env,
-  ctx: ExecutionContext
+  _ctx: ExecutionContext
 ): Promise<void> {
   try {
     const toAddress = message.to;
@@ -28,10 +28,12 @@ export async function handleEmailMessage(
       return;
     }
 
+    // 读取原始邮件内容
+    const rawEmail = await new Response(message.raw).arrayBuffer();
+    
     // 解析邮件内容
-    const rawEmail = new Response(message.raw);
     const parser = new PostalMime();
-    const parsed = await parser.parse(await rawEmail.arrayBuffer());
+    const parsed = await parser.parse(rawEmail);
 
     // 提取纯文本内容（忽略附件）
     const body = parsed.text || parsed.html || null;

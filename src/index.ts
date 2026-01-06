@@ -13,12 +13,12 @@ export default {
   },
 
   // 邮件接收处理
-  async email(message: EmailMessage, env: Env, ctx: ExecutionContext): Promise<void> {
+  async email(message: ForwardableEmailMessage, env: Env, ctx: ExecutionContext): Promise<void> {
     await handleEmailMessage(message, env, ctx);
   },
 
   // 定时任务处理 (清理过期数据)
-  async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
+  async scheduled(_event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
     ctx.waitUntil(cleanupExpiredData(env));
   },
 };
