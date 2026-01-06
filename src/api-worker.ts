@@ -548,7 +548,7 @@ export async function handleApiRequest(
     }
 
     // 调试接口 - 检查环境变量和手动创建管理员
-    if (path === '/api/debug/init' && request.method === 'POST') {
+    if (path === '/api/debug/init') {
       return corsResponse(await handleDebugInit(env));
     }
 
